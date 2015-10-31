@@ -9,12 +9,14 @@ namespace PicSim
 {
     class Program
     {
+        enum DataTypes {Program, EOF, ExtendedAddress=4};
+        const int BYTEBLOCK = 2;
         static void Main(string[] args)
         {
             int NoLines;
-            String[] HexCode, ASM;
+            List<String> HexCode, ASM;
             HexCode = readHex("flash.hex");
-            NoLines = HexCode.Length;
+            //NoLines = HexCode.Length;
             ASM = decompile(HexCode);
         }
         /// <summary>
@@ -23,13 +25,22 @@ namespace PicSim
         /// </summary>
         /// <param name="hex">Hex code read as an array of strings.</param>
         /// <returns>Array of strings with the decompiled assembly.</returns>
-        public static string[] decompile(String[] hex)
+        public static List<String> decompile(List<String> hex)
         {
-            int Bytes, BaseAddress, DataType, DataBytes, CheckSum;
-            String[] sourceISR = new String[0];
+            int Bytes, BaseAddress, CheckSum, i;
+            DataTypes DataType;
+            List<int> DataBytes = new List<int>();
+            List<String> sourceISR = new List<string>();
             foreach(String line in hex)
             {
-                Bytes = Convert.ToInt32(line.Substring(1, 2), 16);
+                Bytes = Convert.ToInt32(line.Substring(1, BYTEBLOCK), 16);
+                BaseAddress = Convert.ToInt32(line.Substring(BYTEBLOCK+1, 2 * BYTEBLOCK), 16) >> 1;
+                DataType = (DataTypes)Convert.ToInt32(line.Substring(3 * BYTEBLOCK+1, BYTEBLOCK), 16);
+                for (i = 0; i < Bytes*BYTEBLOCK; i+=2*BYTEBLOCK)
+                    DataBytes.Add(Convert.ToInt32(  line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) + 
+                                                    line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16));
+                    // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
+                CheckSum = Convert.ToInt32(line.Substring(line.Length - BYTEBLOCK, BYTEBLOCK), 16);
             }
             return sourceISR;
         }
@@ -41,10 +52,10 @@ namespace PicSim
         /// </summary>
         /// <param name="fname">Name of file to open.</param>
         /// <returns>Lines of the read hexfile.</returns>
-        public static string[] readHex(string fname)
+        public static List<string> readHex(string fname)
         {
             int NoLines=0;
-            String[] HexCode;
+            List<String> HexCode = new List<string>();
             try
             {
                 StreamReader sr = new StreamReader(fname);
@@ -53,22 +64,12 @@ namespace PicSim
                     while (!sr.EndOfStream)
                     {
                         String line = sr.ReadLine();
+                        HexCode.Add(line);
                         Console.WriteLine(line);
                         NoLines++;
                     }
-                    HexCode = new String[NoLines];
                     sr.Close();
                     sr.Dispose();
-
-                    StreamReader nr = new StreamReader(fname);
-                
-                    int i = 0;
-                    while (!nr.EndOfStream)
-                    {
-                        HexCode[i] = nr.ReadLine();
-                    }
-                    nr.Close();
-                    nr.Dispose();
                 
             }
 
@@ -76,7 +77,6 @@ namespace PicSim
             {
                 Console.WriteLine("The file could not be read:");
                 Console.WriteLine(e.Message);
-                HexCode = new String[0];
             }
             return HexCode;
         }
