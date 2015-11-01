@@ -20,11 +20,11 @@ namespace PicSim
             ASM = decompile(HexCode);
         }
         /// <summary>
-        /// Function to decompile the lines read from a
-        /// hex file.
+        /// Function to decompile the lines read from a hex file.
+        /// 
         /// </summary>
-        /// <param name="hex">Hex code read as an array of strings.</param>
-        /// <returns>Array of strings with the decompiled assembly.</returns>
+        /// <param name="hex">Hex code read as an list of strings.</param>
+        /// <returns>List of strings with the decompiled assembly.</returns>
         public static List<String> decompile(List<String> hex)
         {
             int Bytes, BaseAddress, CheckSum, i;
