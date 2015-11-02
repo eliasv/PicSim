@@ -33,43 +33,123 @@ namespace PicSim
         private string asmLookUp(int Bin)
         {
             string ASM = "";
+            int f, b;
             if (Bin >> 10 == 0)         // Typical case for Byte Oriented File Register Instructions
             {
-                if ((Bin & 0x0FFF) >> 8 == 0)   // Case 1 of 2 possible instructions for this nibble
-                    if ((Bin & 0x009F) == 0)
+                if ((Bin & 0x0FFF) >> 8 == 0)       // 6 instructions start with 00 0000 xxxx xxxx
+                {
+                    if ((Bin & 0x009F) == 0)        // Case NOP: 00 0000 0xx0 0000
                         ASM = "NOP";
-                    else
+                    else if ((Bin & 0x0080) == 1)   // Case MOVWF: 00 0000 1fff ffff
                     {
-                        int f = Bin & 0x007F;
+                        f = Bin & 0x007F;
                         ASM = "MOVWF " + decodeRegisterFile(f);
                     }
-                else if ((Bin & 0x0FFF) >> 8 == 1) // Case 2 of 2 possible instructions for this nibble
-                {
-                    if ((Bin & 0x0080) == 0)
-                        ASM = "CLRW";
-                    else
+                    else  // Literal and Control Operations that start with 00 0000
                     {
-                        int f = Bin & 0x007F;
+                        if ((Bin) == 8)            // Case RETURN: 00 0000 0000 1000
+                            ASM = "RETURN";
+                        else if ((Bin) == 9)       // Case RETFIE: 00 0000 0000 1001
+                            ASM = "RETFIE";
+                        else if ((Bin) == 0x0063)  // Case SLEEP:  00 0000 0110 0011
+                            ASM = "SLEEP";
+                        else if ((Bin) == 0x0064)   // Case CLRWDT: 00 0000 0110 0100
+                            ASM = "CLRWDT";
+                    }
+                }
+                else if ((Bin & 0x0FFF) >> 8 == 1) // Instructions that start with 00 0001 xxxx xxxx
+                {
+                    if ((Bin & 0x0080) == 0)        // Case CLRW:   00 0001 0xxx xxxx
+                        ASM = "CLRW";
+                    else                            // Case CLRF:   00 0001 1fff ffff
+                    {
+                        f = Bin & 0x007F;
                         ASM = "CLRF " + decodeRegisterFile(f);
-                    } 
+                    }
                 }
                 else                               // The rest of the Byte Oriented File Register Instructions
                 {
-                    switch(Bin & 0x0F00)
+                    f = Bin & 0x007F;
+                    switch ((Bin & 0x0F00)>>8)
                     {
-                        case 2:
-
+                        case 2:                     // Case SUBWF:  00 0010 dfff ffff
+                            
+                            ASM = "SUBWF ";
+                            break;
+                        case 3:
+                            ASM = "DECF ";          // Case DECF:   00 0011 dfff ffff
+                            break;
+                        case 4:                     // Case IORWF:  00 0100 dfff ffff
+                            ASM = "IORWF ";
+                            break;
+                        case 5:
+                            ASM = "ANDWF ";         // Case ANDWF:  00 0101 dfff ffff
+                            break;
+                        case 6:                     // Case XORWF:  00 0110 dfff ffff
+                            ASM = "XORWF ";
+                            break;
+                        case 7:                     // Case ADDWF: 00 0111 dfff ffff
+                            ASM = "ADDWF ";
+                            break;
+                        case 8:
+                            ASM = "MOVF ";          // Case MOVF:   00 1000 dfff ffff
+                            break;
+                        case 9:                     // Case COMF:   00 1001 dfff ffff
+                            ASM = "COMF ";
+                            break;
+                        case 10:                    // Case INCF:   00 1010 dfff ffff
+                            ASM = "INCF ";
+                            break;
+                        case 11:                    // Case DECFSZ: 00 1011 dfff ffff
+                            ASM = "DECFSZ ";
+                            break;
+                        case 12:                    // Case RRF:    00 1100 dfff ffff
+                            ASM = "RRF ";
+                            break;
+                        case 13:                    // Case RLF:    00 1101 dfff ffff
+                            ASM = "RLF ";
+                            break;
+                        case 14:                    // Case SWAPF:  00 1110 dfff ffff
+                            ASM = "SWAPF ";
+                            break;
+                        case 15:                    // Case INCFSZ: 00 1111 dfff ffff
+                            ASM = "INCFSZ ";
                             break;
                         default:
+                            throw new Exception("Unknown OpCode.");
                             break;
                     }
+                    if ((Bin & 0x0080) >> 7 == 1)
+                        ASM += decodeRegisterFile(f) + ", " + decodeRegisterFile(f);
+                    else
+                        ASM += decodeRegisterFile(f);
                 }
             }
             else if (Bin >> 10 == 1)    // Typical case for Bit Oriented File Register Instructions
             {
-                ASM = "";
+                f = Bin & 0x007F;
+                b = (Bin & 0x0)>>0;
+                switch ((Bin & 0x0C00)>>10)
+                {
+                    case 0:                         // Case BCF:    00 00bb bfff ffff
+                        ASM = "BCF ";
+                        break;
+                    case 1:                         // Case BSF:    00 01bb bfff ffff
+                        ASM = "BSF ";
+                        break;
+                    case 2:                         // Case BTFSC:  00 10bb bfff ffff
+                        ASM = "BTFSC ";
+                        break;
+                    case 3:                         // Case BTFSS:  00 11bb bfff ffff
+                        ASM = "BTFSS ";
+                        break;
+                    default:
+                        throw new Exception("Unknown OpCode.");
+                        break;
+                }
+                ASM += decodeRegisterFile(f) + ", " + b.ToString();
             }
-            else                        // Case for Literal and Control Operations
+            else                        // Case for Typical Literal and Control Operations
             {
                 ASM = "";
             }
