@@ -16,6 +16,7 @@ namespace PicSim
             int NoLines;
             List<String> HexCode, ASM;
             HexCode = readHex("flash.hex");
+            RegisterFile RF = new RegisterFile();
             //NoLines = HexCode.Length;
             ASM = decompile(HexCode);
         }
