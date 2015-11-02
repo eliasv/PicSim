@@ -33,7 +33,7 @@ namespace PicSim
         private string asmLookUp(int Bin)
         {
             string ASM = "";
-            int f, b;
+            int f, b, k;
             if (Bin >> 10 == 0)         // Typical case for Byte Oriented File Register Instructions
             {
                 if ((Bin & 0x0FFF) >> 8 == 0)       // 6 instructions start with 00 0000 xxxx xxxx
@@ -120,9 +120,9 @@ namespace PicSim
                             break;
                     }
                     if ((Bin & 0x0080) >> 7 == 1)
-                        ASM += decodeRegisterFile(f) + ", " + decodeRegisterFile(f);
+                        ASM += decodeRegisterFile(f) + ", f";
                     else
-                        ASM += decodeRegisterFile(f);
+                        ASM += decodeRegisterFile(f) + ", w";
                 }
             }
             else if (Bin >> 10 == 1)    // Typical case for Bit Oriented File Register Instructions
@@ -151,7 +151,26 @@ namespace PicSim
             }
             else                        // Case for Typical Literal and Control Operations
             {
-                ASM = "";
+                if((Bin & 0x3000)>>12 == 2)
+                {
+                    k = Bin & 0x07FF;
+                    if((Bin & 0x0800)>>11 == 1)
+                    {
+                        ASM = "GOTO L"+k.ToString();
+                    }
+                    else
+                    {
+                        ASM = "CALL S"+k.ToString();
+                    }
+                }
+                else
+                {
+                    if ((Bin & 0x0800) >> 11 == 1)
+                        ASM = "MOVLW ";
+                    k = Bin & 0x00FF;
+                    ASM += k.ToString();
+                }
+                
             }
             return ASM;
         }

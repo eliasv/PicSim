@@ -20,6 +20,8 @@ namespace PicSim
             //NoLines = HexCode.Length;
             ASM = decompile(HexCode);
         }
+
+
         /// <summary>
         /// Function to decompile the lines read from a hex file.
         /// 
