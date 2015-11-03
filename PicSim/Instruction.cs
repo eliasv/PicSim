@@ -11,25 +11,47 @@ namespace PicSim
         public enum DataTypes { Program, EOF, ExtendedAddress = 4 };
         public const int BYTEBLOCK = 2;
 
-        private int binary {get; set;}
-        private int BaseAddress { get; set; }
+        private int binary;
+        private int BaseAddress;
         private String ASM { get; set; }
         public int RegisterPage { set; get; }
-
+        /// <summary>
+        /// Empty Instruction constructor. Generates a NOP instruction at memory
+        /// address 0x0000;
+        /// </summary>
         public Instruction()
         {
             binary = 0;
             BaseAddress = 0;
             ASM = "NOP";
         }
-
+        /// <summary>
+        /// Instruction constructor. Decompiles binary data into its assembly mnemonic.
+        /// </summary>
+        /// <param name="Bin">14-bit Binary containing the instruction.</param>
         public Instruction(int Bin)
         {
             binary = Bin;
             BaseAddress = 0;
             ASM = asmLookUp(Bin);
         }
-
+        /// <summary>
+        /// Constructor for an Instruction with a known memory location. Decompiles 
+        /// the binary data into its assembly mnemonic.
+        /// </summary>
+        /// <param name="Bin">14-bit Binary containing the instruction.</param>
+        /// <param name="Address">Memory location of the instruction.</param>
+        public Instruction(int Bin, int Address)
+        {
+            binary = Bin;
+            BaseAddress = Address;
+            ASM = asmLookUp(Bin);
+        }
+        /// <summary>
+        /// This function decodes a PIC16F877 14-bit instruction into its assembly reference.
+        /// </summary>
+        /// <param name="Bin">14 bit coded Instruction.</param>
+        /// <returns>Decoded assembly instruction with arguments.</returns>
         private string asmLookUp(int Bin)
         {
             string ASM = "";
@@ -212,28 +234,5 @@ namespace PicSim
                 return reg;
             else throw new Exception("Unknown Register.");
         }
-
-        /*
-         public static List<String> decompile(List<String> hex)
-        {
-            int Bytes, BaseAddress, CheckSum, i;
-            DataTypes DataType;
-            List<int> DataBytes = new List<int>();
-            List<String> sourceISR = new List<string>();
-            foreach(String line in hex)
-            {
-                Bytes = Convert.ToInt32(line.Substring(1, BYTEBLOCK), 16);
-                BaseAddress = Convert.ToInt32(line.Substring(BYTEBLOCK+1, 2 * BYTEBLOCK), 16) >> 1;
-                DataType = (DataTypes)Convert.ToInt32(line.Substring(3 * BYTEBLOCK+1, BYTEBLOCK), 16);
-                for (i = 0; i < Bytes*BYTEBLOCK; i+=2*BYTEBLOCK)
-                    DataBytes.Add(Convert.ToInt32(  line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) + 
-                                                    line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16));
-                    // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
-                CheckSum = Convert.ToInt32(line.Substring(line.Length - BYTEBLOCK, BYTEBLOCK), 16);
-            }
-            return sourceISR;
-        }
-         */
-
     }
 }
