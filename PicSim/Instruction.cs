@@ -154,19 +154,47 @@ namespace PicSim
                 if((Bin & 0x3000)>>12 == 2)
                 {
                     k = Bin & 0x07FF;
-                    if((Bin & 0x0800)>>11 == 1)
+                    if((Bin & 0x0800)>>11 == 1)     // Case GOTO:   10 1kkk kkkk kkkk
                     {
                         ASM = "GOTO L"+k.ToString();
                     }
-                    else
+                    else                            // Case CALL:   10 0kkk kkkk kkkk
                     {
                         ASM = "CALL S"+k.ToString();
                     }
                 }
                 else
                 {
-                    if ((Bin & 0x0800) >> 11 == 1)
+                    if ((Bin & 0x0C00) >> 10 == 0)  // Case MOVLW:  11 00xx kkkk kkkk
+                    {
                         ASM = "MOVLW ";
+                    }
+                    else if ((Bin & 0x0C00) >> 10 == 1) // Case RETLW:  11 01xx kkkk kkkk
+                    {
+                        ASM = "RETLW ";
+                    }
+                    else if ((Bin & 0x0F00) >> 8 == 8) // Case IORLW:  11 1000 kkkk kkkk
+                    {
+                        ASM = "IORLW ";
+                    }
+                    else if ((Bin & 0x0F00) >> 8 == 9) // Case ANDLW:   11 1001 kkkk kkkk
+                    {
+                        ASM = "ANDLW ";
+                    }
+                    else if ((Bin & 0x0F00) >> 8 == 10) // Case XORLW:  11 1010 kkkk kkkk
+                    {
+                        ASM = "XORLW ";
+                    }
+                    else if ((Bin & 0x0D00) >> 9 == 6) // Case SUBLW:   11 110x kkkk kkkk
+                    {
+                        ASM = "SUBLW ";
+                    }
+                    else if ((Bin & 0x0F00) >> 8 == 8) // Case ADDLW:   11 111x kkkk kkkk
+                    {
+                        ASM = "ADDLW ";
+                    }
+                    else
+                        throw new Exception("Unknown OpCode.");
                     k = Bin & 0x00FF;
                     ASM += k.ToString();
                 }
@@ -182,7 +210,7 @@ namespace PicSim
             reg =  RF.RegFileNames[RegisterPage].ElementAt(f);
             if (!reg.Equals("") && !reg.Equals("N/I") && !reg.Equals("Reserved"))
                 return reg;
-            else throw new Exception("Illegal Register.");
+            else throw new Exception("Unknown Register.");
         }
 
         /*
