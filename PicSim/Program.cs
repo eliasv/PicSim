@@ -14,7 +14,8 @@ namespace PicSim
         static void Main(string[] args)
         {
             int NoLines;
-            List<String> HexCode, ASM;
+            List<String> HexCode;
+            List <Instruction> ASM;
             HexCode = readHex("flash.hex");
             RegisterFile RF = new RegisterFile();
             //NoLines = HexCode.Length;
@@ -28,21 +29,25 @@ namespace PicSim
         /// </summary>
         /// <param name="hex">Hex code read as an list of strings.</param>
         /// <returns>List of strings with the decompiled assembly.</returns>
-        public static List<String> decompile(List<String> hex)
+        public static List<Instruction> decompile(List<String> hex)
         {
-            int Bytes, BaseAddress, CheckSum, i;
+            int Bytes, BaseAddress, CheckSum, i, bin;
             DataTypes DataType;
             List<int> DataBytes = new List<int>();
-            List<String> sourceISR = new List<string>();
+            List<Instruction> sourceISR = new List<Instruction>();
             foreach(String line in hex)
             {
                 Bytes = Convert.ToInt32(line.Substring(1, BYTEBLOCK), 16);
                 BaseAddress = Convert.ToInt32(line.Substring(BYTEBLOCK+1, 2 * BYTEBLOCK), 16) >> 1;
                 DataType = (DataTypes)Convert.ToInt32(line.Substring(3 * BYTEBLOCK+1, BYTEBLOCK), 16);
-                for (i = 0; i < Bytes*BYTEBLOCK; i+=2*BYTEBLOCK)
-                    DataBytes.Add(Convert.ToInt32(  line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) + 
-                                                    line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16));
+                for (i = 0; i < Bytes * BYTEBLOCK; i += 2 * BYTEBLOCK)
+                {
                     // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
+                    bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
+                                                    line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
+                    DataBytes.Add(bin);
+                    sourceISR.Add(new Instruction(bin, BaseAddress+i/(2*BYTEBLOCK)));
+                }
                 CheckSum = Convert.ToInt32(line.Substring(line.Length - BYTEBLOCK, BYTEBLOCK), 16);
             }
             return sourceISR;
