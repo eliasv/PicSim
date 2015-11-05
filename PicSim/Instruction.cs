@@ -10,7 +10,7 @@ namespace PicSim
     {
         public enum DataTypes { Program, EOF, ExtendedAddress = 4 };
         public const int BYTEBLOCK = 2;
-
+        private RegisterFile rf = new RegisterFile();
         private int binary;
         private int BaseAddress;
         private String ASM { get; set; }
@@ -150,7 +150,7 @@ namespace PicSim
             else if (Bin >> 12 == 1)    // Typical case for Bit Oriented File Register Instructions
             {
                 f = Bin & 0x007F;
-                b = (Bin & 0x0)>>0;
+                b = (Bin & 0x0380)>>7;
                 switch ((Bin & 0x0C00)>>10)
                 {
                     case 0:                         // Case BCF:    01 00bb bfff ffff
@@ -227,9 +227,8 @@ namespace PicSim
 
         private string decodeRegisterFile(int f)
         {
-            RegisterFile RF = new RegisterFile();
             String reg = "";
-            reg =  RF.RegFileNames[RegisterPage].ElementAt(f);
+            reg =  rf.RegFileNames[RegisterPage].ElementAt(f);
             if (!reg.Equals("") && !reg.Equals("N/I") && !reg.Equals("Reserved"))
                 return reg;
             else throw new Exception("Unknown Register.");
