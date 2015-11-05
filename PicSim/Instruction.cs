@@ -56,7 +56,7 @@ namespace PicSim
         {
             string ASM = "";
             int f, b, k;
-            if (Bin >> 10 == 0)         // Typical case for Byte Oriented File Register Instructions
+            if (Bin >> 12 == 0)         // Typical case for Byte Oriented File Register Instructions
             {
                 if ((Bin & 0x0FFF) >> 8 == 0)       // 6 instructions start with 00 0000 xxxx xxxx
                 {
@@ -147,7 +147,7 @@ namespace PicSim
                         ASM += decodeRegisterFile(f) + ", w";
                 }
             }
-            else if (Bin >> 10 == 1)    // Typical case for Bit Oriented File Register Instructions
+            else if (Bin >> 12 == 1)    // Typical case for Bit Oriented File Register Instructions
             {
                 f = Bin & 0x007F;
                 b = (Bin & 0x0)>>0;
