@@ -153,16 +153,16 @@ namespace PicSim
                 b = (Bin & 0x0)>>0;
                 switch ((Bin & 0x0C00)>>10)
                 {
-                    case 0:                         // Case BCF:    00 00bb bfff ffff
+                    case 0:                         // Case BCF:    01 00bb bfff ffff
                         ASM = "BCF ";
                         break;
-                    case 1:                         // Case BSF:    00 01bb bfff ffff
+                    case 1:                         // Case BSF:    01 01bb bfff ffff
                         ASM = "BSF ";
                         break;
-                    case 2:                         // Case BTFSC:  00 10bb bfff ffff
+                    case 2:                         // Case BTFSC:  01 10bb bfff ffff
                         ASM = "BTFSC ";
                         break;
-                    case 3:                         // Case BTFSS:  00 11bb bfff ffff
+                    case 3:                         // Case BTFSS:  01 11bb bfff ffff
                         ASM = "BTFSS ";
                         break;
                     default:
@@ -233,6 +233,10 @@ namespace PicSim
             if (!reg.Equals("") && !reg.Equals("N/I") && !reg.Equals("Reserved"))
                 return reg;
             else throw new Exception("Unknown Register.");
+        }
+        public String toString()
+        {
+            return ASM;
         }
     }
 }
