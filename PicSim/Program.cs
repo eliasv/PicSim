@@ -11,13 +11,13 @@ namespace PicSim
     {
         enum DataTypes {Program, EOF, ExtendedAddress=4};
         const int BYTEBLOCK = 2;
+        public static RegisterFile RF = new RegisterFile();
         static void Main(string[] args)
         {
             int NoLines;
             List<String> HexCode;
             List <Instruction> ASM;
             HexCode = readHex("flash.hex");
-            RegisterFile RF = new RegisterFile();
             //NoLines = HexCode.Length;
             ASM = decompile(HexCode);
         }
@@ -46,7 +46,7 @@ namespace PicSim
                     bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
                                                     line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
                     DataBytes.Add(bin);
-                    sourceISR.Add(new Instruction(bin, BaseAddress+i/(2*BYTEBLOCK)));
+                    sourceISR.Add(new Instruction(bin, BaseAddress+i/(2*BYTEBLOCK), RF));
                 }
                 CheckSum = Convert.ToInt32(line.Substring(line.Length - BYTEBLOCK, BYTEBLOCK), 16);
             }

@@ -10,11 +10,11 @@ namespace PicSim
     {
         public enum DataTypes { Program, EOF, ExtendedAddress = 4 };
         public const int BYTEBLOCK = 2;
-        private RegisterFile rf = new RegisterFile();
+        private RegisterFile rf;
         private int binary;
         private int BaseAddress;
         private String ASM { get; set; }
-        public int RegisterPage { set; get; }
+        //public int RegisterPage { set; get; }
         /// <summary>
         /// Empty Instruction constructor. Generates a NOP instruction at memory
         /// address 0x0000;
@@ -23,7 +23,9 @@ namespace PicSim
         {
             binary = 0;
             BaseAddress = 0;
+            rf = new RegisterFile();
             ASM = "NOP";
+            
         }
         /// <summary>
         /// Instruction constructor. Decompiles binary data into its assembly mnemonic.
@@ -33,6 +35,7 @@ namespace PicSim
         {
             binary = Bin;
             BaseAddress = 0;
+            rf = new RegisterFile();
             ASM = asmLookUp(Bin);
         }
         /// <summary>
@@ -44,6 +47,15 @@ namespace PicSim
         public Instruction(int Bin, int Address)
         {
             binary = Bin;
+            rf = new RegisterFile();
+            BaseAddress = Address;
+            ASM = asmLookUp(Bin);
+        }
+
+        public Instruction(int Bin, int Address, RegisterFile regin)
+        {
+            binary = Bin;
+            rf = regin;
             BaseAddress = Address;
             ASM = asmLookUp(Bin);
         }
@@ -65,7 +77,7 @@ namespace PicSim
                     else if ((Bin & 0x0080) == 1)   // Case MOVWF: 00 0000 1fff ffff
                     {
                         f = Bin & 0x007F;
-                        ASM = "MOVWF " + decodeRegisterFile(f);
+                        ASM = "MOVWF " + rf.decodeResgiterFile(f);
                     }
                     else  // Literal and Control Operations that start with 00 0000
                     {
@@ -86,7 +98,7 @@ namespace PicSim
                     else                            // Case CLRF:   00 0001 1fff ffff
                     {
                         f = Bin & 0x007F;
-                        ASM = "CLRF " + decodeRegisterFile(f);
+                        ASM = "CLRF " + rf.decodeResgiterFile(f);
                     }
                 }
                 else                               // The rest of the Byte Oriented File Register Instructions
@@ -142,9 +154,9 @@ namespace PicSim
                             break;
                     }
                     if ((Bin & 0x0080) >> 7 == 1)
-                        ASM += decodeRegisterFile(f) + ", f";
+                        ASM += rf.decodeResgiterFile(f) + ", f";
                     else
-                        ASM += decodeRegisterFile(f) + ", w";
+                        ASM += rf.decodeResgiterFile(f) + ", w";
                 }
             }
             else if (Bin >> 12 == 1)    // Typical case for Bit Oriented File Register Instructions
@@ -169,7 +181,7 @@ namespace PicSim
                         throw new Exception("Unknown OpCode.");
                         break;
                 }
-                ASM += decodeRegisterFile(f) + ", " + b.ToString();
+                ASM += rf.decodeResgiterFile(f) + ", " + b.ToString();
             }
             else                        // Case for Typical Literal and Control Operations
             {
@@ -225,15 +237,11 @@ namespace PicSim
             return ASM;
         }
 
-        private string decodeRegisterFile(int f)
-        {
-            String reg = "";
-            reg =  rf.RegFileNames[RegisterPage].ElementAt(f);
-            if (!reg.Equals("") && !reg.Equals("N/I") && !reg.Equals("Reserved"))
-                return reg;
-            else throw new Exception("Unknown Register.");
-        }
-        public String toString()
+        /// <summary>
+        /// Convert the instruction into a string mneumonic in the ISA.
+        /// </summary>
+        /// <returns>Mneumonic of the instruction.</returns>
+        public override String ToString()
         {
             return ASM;
         }

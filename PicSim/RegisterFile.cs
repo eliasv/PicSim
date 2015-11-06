@@ -17,6 +17,7 @@ namespace PicSim
         public List<String>[] RegFileNames;
         public List<int>[] RegFile;
         public int[] offset;
+        private int RegisterPage { set; get; }
         private const int BANKS = 4;
         public RegisterFile()
         {
@@ -51,6 +52,29 @@ namespace PicSim
                 Console.WriteLine("The file could not be read:");
                 Console.WriteLine(e.Message);
             }
+        }
+
+        public void set(String regName, int value)
+        {
+            bool[] present = new bool[4];
+            for(int i =0; i < BANKS; i++)
+            {
+                present[i] = RegFileNames[i].Contains(regName);
+            }
+        }
+
+        public int set(String regName)
+        {
+            return 0;
+        }
+
+        public string decodeResgiterFile(int f)
+        {
+            String reg = "";
+            reg = RegFileNames[RegisterPage].ElementAt(f);
+            if (!reg.Equals("") && !reg.Equals("N/I") && !reg.Equals("Reserved"))
+                return reg;
+            else throw new Exception("Unknown Register.");
         }
 
     }
