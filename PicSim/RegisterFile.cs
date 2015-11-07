@@ -56,15 +56,32 @@ namespace PicSim
 
         public void set(String regName, int value)
         {
-            bool[] present = new bool[4];
-            for(int i =0; i < BANKS; i++)
+            int i;
+            int index = -1;
+            for(i =0; i < BANKS; i++)
             {
-                present[i] = RegFileNames[i].Contains(regName);
+                if (RegFileNames[i].Contains(regName))
+                {
+                    index = RegFileNames[i].FindIndex(
+                            delegate(String s)
+                            {
+                                return s.Equals(regName);
+                            }
+                    );
+                    
+                    break;
+                }
             }
         }
 
-        public int set(String regName)
+        public int get(String regName)
         {
+            int i;
+            for (i = 0; i < BANKS; i++)
+            {
+                if (RegFileNames[i].Contains(regName))
+                    break;
+            }
             return 0;
         }
 
