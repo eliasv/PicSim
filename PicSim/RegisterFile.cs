@@ -59,8 +59,20 @@ namespace PicSim
                 {
                     index = RegFile[i].FindIndex(x=>x.name==regName);
                     RegFile[i].ElementAt(index).value = value;
+                    if(regName=="STATUS")
+                    {
+                        RegisterPage = (value & 0x60) >> 5;
+                    }
                 }
             }
+        }
+
+        public void set(int address, int value)
+        {
+            int oldpage = RegisterPage;
+            // Decode RF page from address
+            RegisterPage = (address & 0x180) >> 8;
+            RegFile[RegisterPage].ElementAt(address & 0x07F).value = value;
         }
 
         public int get(String regName)
@@ -80,9 +92,11 @@ namespace PicSim
         {
             String reg = "";
             reg = RegFile[RegisterPage].ElementAt(f).name;
-            if (!reg.Equals("") && !reg.Equals("N/I") && !reg.Equals("Reserved") && !reg.Equals("Accesses"))
+            if (!reg.Equals("") && !reg.Equals("Reserved") && !reg.Equals("N/I") && !reg.Equals("Accesses"))
                 return reg;
-            else throw new Exception("Unknown Register.");
+            else
+                return String.Format("0x{0}",(offset[RegisterPage] + f).ToString("X4"));
+            // else throw new Exception("Unknown Register.");
         }
 
     }

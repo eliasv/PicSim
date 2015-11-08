@@ -12,16 +12,51 @@ namespace PicSim
         enum DataTypes {Program, EOF, ExtendedAddress=4};
         const int BYTEBLOCK = 2;
         public static RegisterFile RF = new RegisterFile();
+        public static List<String> ByteOps;
+        public static List<String> BitOps;
+        public static List<String> LitControlOps;
+        public static List<asmLabel> Labels = new List<asmLabel>();
         static void Main(string[] args)
         {
-            int NoLines;
             List<String> HexCode;
             List <Instruction> ASM;
+            
+            Init();
             HexCode = readHex("flash.hex");
             //NoLines = HexCode.Length;
             ASM = decompile(HexCode);
             foreach (var line in ASM)
                 Console.WriteLine(line.ToString());
+        }
+
+        /// <summary>
+        /// Initialize three (3) sets in which the ISA is devided:
+        ///     - Byte-Oriented File Register Operations
+        ///     - Bit-Oriented File Register Operations
+        ///     - Literal and Control Operations
+        ///     
+        /// The Byte Operations and the Bit operations have access to the 
+        /// register file while the Lieral and Control Ops generate jumps
+        /// and subroutin calls.
+        /// </summary>
+        private static void Init()
+        {
+            ByteOps = new List<string>();
+            BitOps = new List<string>();
+            LitControlOps = new List<string>();
+            String[] byteOp = { "ADDWF","ANDWF","CLRF","CLRW","COMF","DECF",
+                                "DECFSZ","INCF","INCFSZ","IORWF","MOVF","MOVWF",
+                                "NOP","RLF","RRF","SUBWF","SWAPF","XORWF"
+                            };
+            String[] bitOp = {"BCF","BSF","BTFSC","BTFSS"};
+            String[] LitOps = { "ADDLW","ANDLW","CALL","CLRWDT","GOTO",
+                                "IORLW","MOVLW","RETFIE","RETLW","RETURN",
+                                "SLEEP","SUBLW","XORLW"
+                              };
+            ByteOps.AddRange(byteOp);
+            BitOps.AddRange(bitOp);
+            LitControlOps.AddRange(LitOps);
+            
         }
 
 
@@ -46,13 +81,67 @@ namespace PicSim
                 {
                     Instruction I;
                     String label = "";
+                    String[] args;
                     // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
                     bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
                                                     line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
                     DataBytes.Add(bin);
-                    I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF, label);
+                    try
+                    {
+                        // Start the BT by modifying the CPU Registers.
+                        I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF, label);
+                        if (!LitControlOps.Contains(I.getmnemonic()))
+                        {
+                            if (BitOps.Contains(I.getmnemonic()))
+                            {
+                                switch (I.getmnemonic())
+                                {
+                                    case "BCF":
+                                        args = I.getargs();
+                                        RF.set(args[0], RF.get(args[0]) & ~((0x1 << Convert.ToInt32(args[1], 16))));
+                                        break;
+                                    case "BSF":
+                                        args = I.getargs();
+                                        RF.set(args[0], RF.get(args[0]) | ((0x1 << Convert.ToInt32(args[1], 16))));
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                            else
+                            {
+
+                            }
+                        }
+                        else
+                        {
+                            int addr;
+                            switch(I.getmnemonic())
+                            {
+                                // Managing labels while decompiling.
+                                case "CALL":
+                                    args = I.getargs();
+                                    addr = bin & 0x07FF;
+                                    Labels.Add(new asmLabel(args[0], addr));
+                                    break;
+                                case "GOTO":
+                                    args = I.getargs();
+                                    addr = bin & 0x07FF;
+                                    Labels.Add(new asmLabel(args[0], addr));
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                        sourceISR.Add(I);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine("Something horrible happenned:");
+                        Console.WriteLine(e.Message);
+                        Console.WriteLine("Instruction skipped.");
+                    }
                     
-                    sourceISR.Add(I);
                 }
                 CheckSum = Convert.ToInt32(line.Substring(line.Length - BYTEBLOCK, BYTEBLOCK), 16);
             }

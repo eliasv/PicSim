@@ -14,7 +14,7 @@ namespace PicSim
         private int binary;
         private int BaseAddress;
         private String ASM { get; set; }
-        private String Label { get; set; }
+        public asmLabel Label { get; set; }
         private String mnemonic { get; set; }
         private String[] args { get; set; }
 
@@ -27,7 +27,7 @@ namespace PicSim
             binary = 0;
             BaseAddress = 0;
             rf = new RegisterFile();
-            Label = "";
+            Label = new asmLabel("", BaseAddress);
             ASM = "NOP";
             mnemonic = ASM;
             
@@ -41,7 +41,7 @@ namespace PicSim
             binary = Bin;
             BaseAddress = 0;
             rf = new RegisterFile();
-            Label = "";
+            Label = new asmLabel("", BaseAddress);
             ASM = asmLookUp(Bin);
         }
         /// <summary>
@@ -55,7 +55,7 @@ namespace PicSim
             binary = Bin;
             rf = new RegisterFile();
             BaseAddress = Address;
-            Label = "";
+            Label = new asmLabel("", BaseAddress);
             ASM = asmLookUp(Bin);
         }
 
@@ -64,7 +64,7 @@ namespace PicSim
             binary = Bin;
             rf = regin;
             BaseAddress = Address;
-            Label = "";
+            Label = new asmLabel("", BaseAddress);
             ASM = asmLookUp(Bin);
         }
 
@@ -73,7 +73,7 @@ namespace PicSim
             binary = Bin;
             rf = regin;
             BaseAddress = Address;
-            Label = label;
+            Label = new asmLabel(label, BaseAddress);
             ASM = asmLookUp(Bin);
         }
 
@@ -95,7 +95,7 @@ namespace PicSim
                         ASM = "NOP"; 
                         mnemonic = ASM; 
                     }
-                    else if ((Bin & 0x0080) == 1)   // Case MOVWF: 00 0000 1fff ffff
+                    else if ((Bin & 0x0080)>>7 == 1)   // Case MOVWF: 00 0000 1fff ffff
                     {
                         f = Bin & 0x007F;
                         ASM = "MOVWF";
@@ -192,7 +192,7 @@ namespace PicSim
                         args = new String[2];
                         args[0] = rf.decodeResgiterFile(f);
                         args[1] = "f";
-                        ASM += " " + args[0] + args[1];
+                        ASM += " " + args[0] + "," + args[1];
                     }
                     else
                     {
@@ -200,7 +200,7 @@ namespace PicSim
                         args = new String[2];
                         args[0] = rf.decodeResgiterFile(f);
                         args[1] = "w";
-                        ASM += " " + args[0] + args[1];
+                        ASM += " " + args[0] + "," + args[1];
                     }
                 }
             }
@@ -230,7 +230,7 @@ namespace PicSim
                 args = new String[2];
                 args[0] = rf.decodeResgiterFile(f);
                 args[1] = b.ToString("X1");
-                ASM += " " + args[0] + args[1];
+                ASM += " " + args[0] + "," + args[1];
             }
             else                        // Case for Typical Literal and Control Operations
             {
@@ -297,13 +297,17 @@ namespace PicSim
             return ASM;
         }
 
-         /// <summary>
+        public String getmnemonic() { return mnemonic; }
+        public String[] getargs() { return args; }
+        public void setLabel(asmLabel label) { Label = label; }
+
+        /// <summary>
         /// Convert the instruction into a string mneumonic in the ISA.
         /// </summary>
         /// <returns>Mneumonic of the instruction.</returns>
         public override String ToString()
         {
-            return String.Format("{0,5}\t{3,6}\t{1,15}\t{2,32}",BaseAddress.ToString("X4"), Label, ASM, binary.ToString("X4"));
+            return String.Format("{0,5}\t{3,6}\t{1,15}\t{2,-32}",BaseAddress.ToString("X4"), Label, ASM, binary.ToString("X4"));
         }
     }
 }
