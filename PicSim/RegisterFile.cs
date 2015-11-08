@@ -14,34 +14,29 @@ namespace PicSim
     /// </summary>
     class RegisterFile
     {
-        public List<String>[] RegFileNames;
-        public List<int>[] RegFile;
+        public List<register>[] RegFile;
         public int[] offset;
         private int RegisterPage { set; get; }
         private const int BANKS = 4;
         public RegisterFile()
         {
-            RegFileNames = new List<string>[BANKS];
-            RegFile = new List<int>[BANKS];
+            RegFile = new List<register>[BANKS];
             offset = new int[BANKS];
             int i = 0;
             try
             {
                 var lines = File.ReadAllLines("RegFile.csv");
                 for (i = 0; i < 4; i++)
-                    RegFileNames[i] = new List<string>();
-                for (i = 0; i < 4; i++)
-                    RegFile[i] = new List<int>();
+                    RegFile[i] = new List<register>();
                 var parsed = from line in lines
                              select (line.Split(',')).ToArray();
                 i = 0;
                 foreach (var line in parsed)
                 {
-                    RegFile[0].Add(0); RegFile[1].Add(0); RegFile[2].Add(0); RegFile[3].Add(0);
-                    RegFileNames[0].Add(parsed.ElementAt(i).ElementAt(0));
-                    RegFileNames[1].Add(parsed.ElementAt(i).ElementAt(1));
-                    RegFileNames[2].Add(parsed.ElementAt(i).ElementAt(2));
-                    RegFileNames[3].Add(parsed.ElementAt(i++).ElementAt(3));
+                    RegFile[0].Add(new register(parsed.ElementAt(i).ElementAt(0)));
+                    RegFile[1].Add(new register(parsed.ElementAt(i).ElementAt(1)));
+                    RegFile[2].Add(new register(parsed.ElementAt(i).ElementAt(2)));
+                    RegFile[3].Add(new register(parsed.ElementAt(i++).ElementAt(3)));
                 }
                 offset[0] = 0; offset[1] = 0x80;
                 offset[2] = 0x100; offset[3] = 0x180;
@@ -58,18 +53,12 @@ namespace PicSim
         {
             int i;
             int index = -1;
-            for(i =0; i < BANKS; i++)
+            for (i = 0; i < BANKS; i++)
             {
-                if (RegFileNames[i].Contains(regName))
+                if (RegFile[i].Exists(x=>x.name==regName))
                 {
-                    index = RegFileNames[i].FindIndex(
-                            delegate(String s)
-                            {
-                                return s.Equals(regName);
-                            }
-                    );
-                    
-                    break;
+                    index = RegFile[i].FindIndex(x=>x.name==regName);
+                    RegFile[i].ElementAt(index).value = value;
                 }
             }
         }
@@ -79,17 +68,19 @@ namespace PicSim
             int i;
             for (i = 0; i < BANKS; i++)
             {
-                if (RegFileNames[i].Contains(regName))
-                    break;
+                if (RegFile[i].Exists(x => x.name == regName))
+                {
+                    return RegFile[i].First(x => x.name == regName).value;
+                }
             }
-            return 0;
+            throw new Exception("Unknown Register.");
         }
 
         public string decodeResgiterFile(int f)
         {
             String reg = "";
-            reg = RegFileNames[RegisterPage].ElementAt(f);
-            if (!reg.Equals("") && !reg.Equals("N/I") && !reg.Equals("Reserved"))
+            reg = RegFile[RegisterPage].ElementAt(f).name;
+            if (!reg.Equals("") && !reg.Equals("N/I") && !reg.Equals("Reserved") && !reg.Equals("Accesses"))
                 return reg;
             else throw new Exception("Unknown Register.");
         }

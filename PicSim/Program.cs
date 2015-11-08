@@ -20,6 +20,8 @@ namespace PicSim
             HexCode = readHex("flash.hex");
             //NoLines = HexCode.Length;
             ASM = decompile(HexCode);
+            foreach (var line in ASM)
+                Console.WriteLine(line.ToString());
         }
 
 
@@ -42,11 +44,15 @@ namespace PicSim
                 DataType = (DataTypes)Convert.ToInt32(line.Substring(3 * BYTEBLOCK+1, BYTEBLOCK), 16);
                 for (i = 0; i < Bytes * BYTEBLOCK; i += 2 * BYTEBLOCK)
                 {
+                    Instruction I;
+                    String label = "";
                     // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
                     bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
                                                     line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
                     DataBytes.Add(bin);
-                    sourceISR.Add(new Instruction(bin, BaseAddress+i/(2*BYTEBLOCK), RF));
+                    I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF, label);
+                    
+                    sourceISR.Add(I);
                 }
                 CheckSum = Convert.ToInt32(line.Substring(line.Length - BYTEBLOCK, BYTEBLOCK), 16);
             }

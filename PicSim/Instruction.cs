@@ -14,7 +14,10 @@ namespace PicSim
         private int binary;
         private int BaseAddress;
         private String ASM { get; set; }
-        //public int RegisterPage { set; get; }
+        private String Label { get; set; }
+        private String mnemonic { get; set; }
+        private String[] args { get; set; }
+
         /// <summary>
         /// Empty Instruction constructor. Generates a NOP instruction at memory
         /// address 0x0000;
@@ -24,7 +27,9 @@ namespace PicSim
             binary = 0;
             BaseAddress = 0;
             rf = new RegisterFile();
+            Label = "";
             ASM = "NOP";
+            mnemonic = ASM;
             
         }
         /// <summary>
@@ -36,6 +41,7 @@ namespace PicSim
             binary = Bin;
             BaseAddress = 0;
             rf = new RegisterFile();
+            Label = "";
             ASM = asmLookUp(Bin);
         }
         /// <summary>
@@ -49,16 +55,28 @@ namespace PicSim
             binary = Bin;
             rf = new RegisterFile();
             BaseAddress = Address;
+            Label = "";
             ASM = asmLookUp(Bin);
         }
 
-        public Instruction(int Bin, int Address, RegisterFile regin)
+        public Instruction(int Bin, int Address, ref RegisterFile regin)
         {
             binary = Bin;
             rf = regin;
             BaseAddress = Address;
+            Label = "";
             ASM = asmLookUp(Bin);
         }
+
+        public Instruction(int Bin, int Address, ref RegisterFile regin, String label)
+        {
+            binary = Bin;
+            rf = regin;
+            BaseAddress = Address;
+            Label = label;
+            ASM = asmLookUp(Bin);
+        }
+
         /// <summary>
         /// This function decodes a PIC16F877 14-bit instruction into its assembly reference.
         /// </summary>
@@ -73,11 +91,18 @@ namespace PicSim
                 if ((Bin & 0x0FFF) >> 8 == 0)       // 6 instructions start with 00 0000 xxxx xxxx
                 {
                     if ((Bin & 0x009F) == 0)        // Case NOP: 00 0000 0xx0 0000
-                        ASM = "NOP";
+                    { 
+                        ASM = "NOP"; 
+                        mnemonic = ASM; 
+                    }
                     else if ((Bin & 0x0080) == 1)   // Case MOVWF: 00 0000 1fff ffff
                     {
                         f = Bin & 0x007F;
-                        ASM = "MOVWF " + rf.decodeResgiterFile(f);
+                        ASM = "MOVWF";
+                        mnemonic = ASM;
+                        args = new String[1];
+                        args[0] = rf.decodeResgiterFile(f);
+                        ASM += " " + rf.decodeResgiterFile(f);
                     }
                     else  // Literal and Control Operations that start with 00 0000
                     {
@@ -89,16 +114,24 @@ namespace PicSim
                             ASM = "SLEEP";
                         else if ((Bin) == 0x0064)   // Case CLRWDT: 00 0000 0110 0100
                             ASM = "CLRWDT";
+                        mnemonic = ASM;
                     }
                 }
                 else if ((Bin & 0x0FFF) >> 8 == 1) // Instructions that start with 00 0001 xxxx xxxx
                 {
                     if ((Bin & 0x0080) == 0)        // Case CLRW:   00 0001 0xxx xxxx
+                    {
                         ASM = "CLRW";
+                        mnemonic = ASM;
+                    }
                     else                            // Case CLRF:   00 0001 1fff ffff
                     {
                         f = Bin & 0x007F;
-                        ASM = "CLRF " + rf.decodeResgiterFile(f);
+                        ASM = "CLRF";
+                        mnemonic = ASM;
+                        args = new String[1];
+                        args[0] = rf.decodeResgiterFile(f);
+                        ASM += " " + args[0];
                     }
                 }
                 else                               // The rest of the Byte Oriented File Register Instructions
@@ -108,55 +141,67 @@ namespace PicSim
                     {
                         case 2:                     // Case SUBWF:  00 0010 dfff ffff
                             
-                            ASM = "SUBWF ";
+                            ASM = "SUBWF";
                             break;
                         case 3:
-                            ASM = "DECF ";          // Case DECF:   00 0011 dfff ffff
+                            ASM = "DECF";          // Case DECF:   00 0011 dfff ffff
                             break;
                         case 4:                     // Case IORWF:  00 0100 dfff ffff
-                            ASM = "IORWF ";
+                            ASM = "IORWF";
                             break;
                         case 5:
-                            ASM = "ANDWF ";         // Case ANDWF:  00 0101 dfff ffff
+                            ASM = "ANDWF";         // Case ANDWF:  00 0101 dfff ffff
                             break;
                         case 6:                     // Case XORWF:  00 0110 dfff ffff
-                            ASM = "XORWF ";
+                            ASM = "XORWF";
                             break;
                         case 7:                     // Case ADDWF: 00 0111 dfff ffff
-                            ASM = "ADDWF ";
+                            ASM = "ADDWF";
                             break;
                         case 8:
-                            ASM = "MOVF ";          // Case MOVF:   00 1000 dfff ffff
+                            ASM = "MOVF";          // Case MOVF:   00 1000 dfff ffff
                             break;
                         case 9:                     // Case COMF:   00 1001 dfff ffff
-                            ASM = "COMF ";
+                            ASM = "COMF";
                             break;
                         case 10:                    // Case INCF:   00 1010 dfff ffff
-                            ASM = "INCF ";
+                            ASM = "INCF";
                             break;
                         case 11:                    // Case DECFSZ: 00 1011 dfff ffff
-                            ASM = "DECFSZ ";
+                            ASM = "DECFSZ";
                             break;
                         case 12:                    // Case RRF:    00 1100 dfff ffff
-                            ASM = "RRF ";
+                            ASM = "RRF";
                             break;
                         case 13:                    // Case RLF:    00 1101 dfff ffff
-                            ASM = "RLF ";
+                            ASM = "RLF";
                             break;
                         case 14:                    // Case SWAPF:  00 1110 dfff ffff
-                            ASM = "SWAPF ";
+                            ASM = "SWAPF";
                             break;
                         case 15:                    // Case INCFSZ: 00 1111 dfff ffff
-                            ASM = "INCFSZ ";
+                            ASM = "INCFSZ";
                             break;
                         default:
                             throw new Exception("Unknown OpCode.");
-                            break;
+                            
                     }
                     if ((Bin & 0x0080) >> 7 == 1)
-                        ASM += rf.decodeResgiterFile(f) + ", f";
+                    {
+                        mnemonic = ASM;
+                        args = new String[2];
+                        args[0] = rf.decodeResgiterFile(f);
+                        args[1] = "f";
+                        ASM += " " + args[0] + args[1];
+                    }
                     else
-                        ASM += rf.decodeResgiterFile(f) + ", w";
+                    {
+                        mnemonic = ASM;
+                        args = new String[2];
+                        args[0] = rf.decodeResgiterFile(f);
+                        args[1] = "w";
+                        ASM += " " + args[0] + args[1];
+                    }
                 }
             }
             else if (Bin >> 12 == 1)    // Typical case for Bit Oriented File Register Instructions
@@ -166,22 +211,26 @@ namespace PicSim
                 switch ((Bin & 0x0C00)>>10)
                 {
                     case 0:                         // Case BCF:    01 00bb bfff ffff
-                        ASM = "BCF ";
+                        ASM = "BCF";
                         break;
                     case 1:                         // Case BSF:    01 01bb bfff ffff
-                        ASM = "BSF ";
+                        ASM = "BSF";
                         break;
                     case 2:                         // Case BTFSC:  01 10bb bfff ffff
-                        ASM = "BTFSC ";
+                        ASM = "BTFSC";
                         break;
                     case 3:                         // Case BTFSS:  01 11bb bfff ffff
-                        ASM = "BTFSS ";
+                        ASM = "BTFSS";
                         break;
                     default:
                         throw new Exception("Unknown OpCode.");
-                        break;
+                        
                 }
-                ASM += rf.decodeResgiterFile(f) + ", " + b.ToString();
+                mnemonic = ASM;
+                args = new String[2];
+                args[0] = rf.decodeResgiterFile(f);
+                args[1] = b.ToString("X1");
+                ASM += " " + args[0] + args[1];
             }
             else                        // Case for Typical Literal and Control Operations
             {
@@ -190,60 +239,71 @@ namespace PicSim
                     k = Bin & 0x07FF;
                     if((Bin & 0x0800)>>11 == 1)     // Case GOTO:   10 1kkk kkkk kkkk
                     {
-                        ASM = "GOTO L"+k.ToString();
+                        ASM = "GOTO";
+                        mnemonic = ASM;
+                        args = new String[1];
+                        args[0] = "L" + k.ToString("X3");
+                        ASM += " " + args[0];
                     }
                     else                            // Case CALL:   10 0kkk kkkk kkkk
                     {
-                        ASM = "CALL S"+k.ToString();
+                        ASM = "CALL";
+                        mnemonic = ASM;
+                        args = new String[1];
+                        args[0] = "S" + k.ToString("X3");
+                        ASM += " " + args[0];
                     }
                 }
                 else
                 {
                     if ((Bin & 0x0C00) >> 10 == 0)  // Case MOVLW:  11 00xx kkkk kkkk
                     {
-                        ASM = "MOVLW ";
+                        ASM = "MOVLW";
                     }
                     else if ((Bin & 0x0C00) >> 10 == 1) // Case RETLW:  11 01xx kkkk kkkk
                     {
-                        ASM = "RETLW ";
+                        ASM = "RETLW";
                     }
                     else if ((Bin & 0x0F00) >> 8 == 8) // Case IORLW:  11 1000 kkkk kkkk
                     {
-                        ASM = "IORLW ";
+                        ASM = "IORLW";
                     }
                     else if ((Bin & 0x0F00) >> 8 == 9) // Case ANDLW:   11 1001 kkkk kkkk
                     {
-                        ASM = "ANDLW ";
+                        ASM = "ANDLW";
                     }
                     else if ((Bin & 0x0F00) >> 8 == 10) // Case XORLW:  11 1010 kkkk kkkk
                     {
-                        ASM = "XORLW ";
+                        ASM = "XORLW";
                     }
                     else if ((Bin & 0x0D00) >> 9 == 6) // Case SUBLW:   11 110x kkkk kkkk
                     {
-                        ASM = "SUBLW ";
+                        ASM = "SUBLW";
                     }
                     else if ((Bin & 0x0F00) >> 8 == 8) // Case ADDLW:   11 111x kkkk kkkk
                     {
-                        ASM = "ADDLW ";
+                        ASM = "ADDLW";
                     }
                     else
                         throw new Exception("Unknown OpCode.");
                     k = Bin & 0x00FF;
-                    ASM += k.ToString();
+                    mnemonic = ASM;
+                    args = new String[1];
+                    args[0] = k.ToString("X2");
+                    ASM += " " + args[0];
                 }
                 
             }
             return ASM;
         }
 
-        /// <summary>
+         /// <summary>
         /// Convert the instruction into a string mneumonic in the ISA.
         /// </summary>
         /// <returns>Mneumonic of the instruction.</returns>
         public override String ToString()
         {
-            return ASM;
+            return String.Format("{0,5}\t{3,6}\t{1,15}\t{2,32}",BaseAddress.ToString("X4"), Label, ASM, binary.ToString("X4"));
         }
     }
 }
