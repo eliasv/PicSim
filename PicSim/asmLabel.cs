@@ -26,7 +26,10 @@ namespace PicSim
 
         public override string ToString()
         {
-            return label;
+            if (label == "")
+                return "";
+            else
+                return label+":";
         }
     }
 }

@@ -77,6 +77,20 @@ namespace PicSim
             ASM = asmLookUp(Bin);
         }
 
+        public Instruction(int Bin, int Address, ref RegisterFile regin, ref asmLabel label)
+        {
+            binary = Bin;
+            rf = regin;
+            BaseAddress = Address;
+            Label = label;
+            ASM = asmLookUp(Bin);
+        }
+
+        public int getAddress()
+        {
+            return BaseAddress;
+        }
+
         /// <summary>
         /// This function decodes a PIC16F877 14-bit instruction into its assembly reference.
         /// </summary>
@@ -299,7 +313,11 @@ namespace PicSim
 
         public String getmnemonic() { return mnemonic; }
         public String[] getargs() { return args; }
-        public void setLabel(asmLabel label) { Label = label; }
+        public void setLabel(ref asmLabel label) 
+        { 
+            Label = label;
+            Label.placed = true;
+        }
 
         /// <summary>
         /// Convert the instruction into a string mneumonic in the ISA.

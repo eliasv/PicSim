@@ -15,7 +15,7 @@ namespace PicSim
         public static List<String> ByteOps;
         public static List<String> BitOps;
         public static List<String> LitControlOps;
-        public static List<asmLabel> Labels = new List<asmLabel>();
+        public static Queue<asmLabel> Labels = new Queue<asmLabel>();
         static void Main(string[] args)
         {
             List<String> HexCode;
@@ -80,6 +80,7 @@ namespace PicSim
                 for (i = 0; i < Bytes * BYTEBLOCK; i += 2 * BYTEBLOCK)
                 {
                     Instruction I;
+                    asmLabel L;
                     String label = "";
                     String[] args;
                     // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
@@ -89,7 +90,9 @@ namespace PicSim
                     try
                     {
                         // Start the BT by modifying the CPU Registers.
-                        I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF, label);
+                        L = new asmLabel("", BaseAddress);
+                        I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF);
+                        
                         if (!LitControlOps.Contains(I.getmnemonic()))
                         {
                             if (BitOps.Contains(I.getmnemonic()))
@@ -122,18 +125,34 @@ namespace PicSim
                                 case "CALL":
                                     args = I.getargs();
                                     addr = bin & 0x07FF;
-                                    Labels.Add(new asmLabel(args[0], addr));
+                                    L.label = args[0];
+                                    L.address = addr;
+                                    if (addr < I.getAddress())
+                                        sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
+                                    else
+                                        Labels.Enqueue(new asmLabel(args[0], addr));
                                     break;
                                 case "GOTO":
                                     args = I.getargs();
                                     addr = bin & 0x07FF;
-                                    Labels.Add(new asmLabel(args[0], addr));
+                                    L.label = args[0];
+                                    L.address = addr;
+                                    if (addr < I.getAddress())
+                                        sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
+                                    else
+                                        Labels.Enqueue(new asmLabel(args[0], addr));
                                     break;
                                 default:
                                     break;
                             }
                         }
+                        if (I.getAddress() == Labels.Peek().address)
+                        {
+                            L = Labels.Dequeue();
+                            I.setLabel(ref L);
+                        }
                         sourceISR.Add(I);
+                        
                     }
                     catch (Exception e)
                     {
@@ -146,6 +165,11 @@ namespace PicSim
                 CheckSum = Convert.ToInt32(line.Substring(line.Length - BYTEBLOCK, BYTEBLOCK), 16);
             }
             return sourceISR;
+        }
+
+        public void insertLabels()
+        {
+
         }
 
         /// <summary>
