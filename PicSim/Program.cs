@@ -12,6 +12,7 @@ namespace PicSim
         enum DataTypes {Program=0, EOF=1, ExtendedAddress=4};
         const int BYTEBLOCK = 2;
         public static RegisterFile RF = new RegisterFile();
+        public static int W;
         public static List<String> ByteOps;
         public static List<String> BitOps;
         public static List<String> LitControlOps;
@@ -81,7 +82,6 @@ namespace PicSim
                 {
                     Instruction I;
                     asmLabel L;
-                    String label = "";
                     String[] args;
                     // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
                     bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
@@ -107,13 +107,29 @@ namespace PicSim
                                         args = I.getargs();
                                         RF.set(args[0], RF.get(args[0]) | ((0x1 << Convert.ToInt32(args[1], 16))));
                                         break;
+                                    case "BTFSC":
+                                        args = I.getargs();
+                                        if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 0)
+                                            RF.set("PCL", RF.get("PCL") + 1);
+                                        break;
+                                    case "BTFSS":
+                                        args = I.getargs();
+                                        if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 1)
+                                            RF.set("PCL", RF.get("PCL") + 1);
+                                        break;
                                     default:
                                         break;
                                 }
                             }
                             else
                             {
-
+                                switch (I.getmnemonic())
+                                {
+                                    case "ADDWF":
+                                        break;
+                                    default:
+                                        break;
+                                }
                             }
                         }
                         else
