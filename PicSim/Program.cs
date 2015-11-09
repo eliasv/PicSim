@@ -9,7 +9,7 @@ namespace PicSim
 {
     class Program
     {
-        enum DataTypes {Program, EOF, ExtendedAddress=4};
+        enum DataTypes {Program=0, EOF=1, ExtendedAddress=4};
         const int BYTEBLOCK = 2;
         public static RegisterFile RF = new RegisterFile();
         public static List<String> ByteOps;
@@ -77,7 +77,7 @@ namespace PicSim
                 Bytes = Convert.ToInt32(line.Substring(1, BYTEBLOCK), 16);
                 BaseAddress = Convert.ToInt32(line.Substring(BYTEBLOCK+1, 2 * BYTEBLOCK), 16) >> 1;
                 DataType = (DataTypes)Convert.ToInt32(line.Substring(3 * BYTEBLOCK+1, BYTEBLOCK), 16);
-                for (i = 0; i < Bytes * BYTEBLOCK; i += 2 * BYTEBLOCK)
+                for (i = 0; i < (Bytes * BYTEBLOCK) && (DataType != DataTypes.EOF); i += 2 * BYTEBLOCK)
                 {
                     Instruction I;
                     asmLabel L;
