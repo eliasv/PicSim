@@ -22,7 +22,7 @@ namespace PicSim
             List <Instruction> ASM;
             
             Init();
-            HexCode = readHex("flash.hex");
+            HexCode = readHex("test.hex");
             //NoLines = HexCode.Length;
             ASM = decompile(HexCode);
             foreach (var line in ASM)
