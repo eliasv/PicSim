@@ -118,13 +118,13 @@ namespace PicSim
                                     RF.set("W", RF.get("W") + Convert.ToInt32(args[1], 16));
                                     break;
                                 case "ADDWF":
-                                    RF.set(args[1], RF.get(args[0]) + RF.get(args[1]));
+                                    RF.set(args[1], RF.get(args[0]) + RF.get("W"));
                                     break;
                                 case "ANDLW":
                                     RF.set("W", RF.get("W") & Convert.ToInt32(args[1], 16));
                                     break;
                                 case "ANDWF":
-                                    RF.set(args[1], RF.get(args[0]) & RF.get(args[1]));
+                                    RF.set(args[1], RF.get(args[0]) & RF.get("W"));
                                     break;
                                 case "CLRF":
                                     RF.set(args[0], 0);
@@ -142,13 +142,13 @@ namespace PicSim
                                     RF.set(args[1], RF.get(args[0]) + 1);
                                     break;
                                 case "IORWF":
-                                    RF.set(args[1], RF.get(args[0]) | RF.get(args[1]));
+                                    RF.set(args[1], RF.get(args[0]) | RF.get("W"));
                                     break;
                                 case "MOVF":
                                     RF.set(args[1], RF.get(args[0]));
                                     break;
                                 case "MOVWF":
-                                    RF.set(args[1], RF.get(args[0]));
+                                    RF.set(args[0], RF.get("W"));
                                     break;
                                 case "NOP":
                                     break;
@@ -170,7 +170,13 @@ namespace PicSim
                                     RF.set(args[1], (temp & 0xff));
                                     break;
                                 case "SUBWF":
-
+                                    RF.set(args[1], RF.get(args[0]) - RF.get("W"));
+                                    break;
+                                case "XORWF":
+                                    RF.set(args[1], RF.get(args[0]) ^ RF.get("W"));
+                                    break;
+                                case "SWAPF":
+                                    RF.set(args[1], RF.get(args[0]) ^ RF.get("W"));
                                     break;
                                 // Managing labels while decompiling.
                                 case "CALL":
