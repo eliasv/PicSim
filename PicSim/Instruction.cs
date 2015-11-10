@@ -200,22 +200,19 @@ namespace PicSim
                             throw new Exception("Unknown OpCode.");
                             
                     }
+                    mnemonic = ASM;
+                    args = new String[2];
                     if ((Bin & 0x0080) >> 7 == 1)
                     {
-                        mnemonic = ASM;
-                        args = new String[2];
                         args[0] = rf.decodeResgiterFile(f);
                         args[1] = "f";
-                        ASM += " " + args[0] + "," + args[1];
                     }
                     else
                     {
-                        mnemonic = ASM;
-                        args = new String[2];
                         args[0] = rf.decodeResgiterFile(f);
                         args[1] = "w";
-                        ASM += " " + args[0] + "," + args[1];
                     }
+                    ASM += " " + args[0] + "," + args[1];
                 }
             }
             else if (Bin >> 12 == 1)    // Typical case for Bit Oriented File Register Instructions
@@ -251,22 +248,19 @@ namespace PicSim
                 if((Bin & 0x3000)>>12 == 2)
                 {
                     k = Bin & 0x07FF;
+                    args = new String[1];
                     if((Bin & 0x0800)>>11 == 1)     // Case GOTO:   10 1kkk kkkk kkkk
                     {
                         ASM = "GOTO";
-                        mnemonic = ASM;
-                        args = new String[1];
                         args[0] = "L" + k.ToString("X3");
-                        ASM += " " + args[0];
                     }
                     else                            // Case CALL:   10 0kkk kkkk kkkk
                     {
                         ASM = "CALL";
-                        mnemonic = ASM;
-                        args = new String[1];
                         args[0] = "S" + k.ToString("X3");
-                        ASM += " " + args[0];
                     }
+                    mnemonic = ASM;
+                    ASM += " " + args[0];
                 }
                 else
                 {

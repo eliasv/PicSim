@@ -12,7 +12,6 @@ namespace PicSim
         enum DataTypes { Program = 0, EOF = 1, ExtendedAddress = 4 };
         const int BYTEBLOCK = 2;
         public static RegisterFile RF = new RegisterFile();
-        public static int W;
         public static List<String> ByteOps;
         public static List<String> BitOps;
         public static List<String> LitControlOps;
@@ -96,51 +95,42 @@ namespace PicSim
                             // Start the BT by modifying the CPU Registers.
                             L = new asmLabel("", BaseAddress);
                             I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF);
-
-                            if (!LitControlOps.Contains(I.getmnemonic()))
-                            {
-                                if (BitOps.Contains(I.getmnemonic()))
-                                {
+                            args = I.getargs();
+                            int addr = 0;
                                     switch (I.getmnemonic())
                                     {
                                         case "BCF":
-                                            args = I.getargs();
                                             RF.set(args[0], RF.get(args[0]) & ~((0x1 << Convert.ToInt32(args[1], 16))));
                                             break;
                                         case "BSF":
-                                            args = I.getargs();
                                             RF.set(args[0], RF.get(args[0]) | ((0x1 << Convert.ToInt32(args[1], 16))));
                                             break;
                                         case "BTFSC":
-                                            args = I.getargs();
                                             if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 0)
                                                 RF.set("PCL", RF.get("PCL") + 1);
                                             break;
                                         case "BTFSS":
-                                            args = I.getargs();
                                             if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 1)
                                                 RF.set("PCL", RF.get("PCL") + 1);
                                             break;
-                                        default:
-                                            break;
-                                    }
-                                }
-                                else
-                                {
-                                    switch (I.getmnemonic())
-                                    {
+                                        case "ADDLW":
+                                            RF.set("W", RF.get("W") + Convert.ToInt32(args[1], 16));
+                                            break; 
                                         case "ADDWF":
+                                            RF.set(args[1], RF.get(args[0]) + RF.get(args[1]));
                                             break;
-                                        default:
+                                        case "ANDLW":
+                                            RF.set("W", RF.get("W") & Convert.ToInt32(args[1], 16));
                                             break;
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                int addr;
-                                switch (I.getmnemonic())
-                                {
+                                        case "ANDWF":
+                                            RF.set(args[1], RF.get(args[0]) & RF.get(args[1]));
+                                            break;
+                                        case "CLRF":
+                                            RF.set(args[0], 0);
+                                            break;
+                                        case "CLRW":
+                                            RF.set("W", 0);
+                                            break;
                                     // Managing labels while decompiling.
                                     case "CALL":
                                         args = I.getargs();
@@ -165,7 +155,6 @@ namespace PicSim
                                     default:
                                         break;
                                 }
-                            }
                             if ((Labels.Count > 0) && (I.getAddress() == Labels.Peek().address))
                             {
                                 L = Labels.Dequeue();

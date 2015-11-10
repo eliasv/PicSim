@@ -54,7 +54,7 @@ namespace PicSim
         {
             int i;
             int index = -1;
-            if (regName == "W")
+            if (regName.ToUpper() == "W")
                 W = value;
             else
             {
@@ -71,6 +71,8 @@ namespace PicSim
                     }
                 }
             }
+            if (value == 0)
+                set("STATUS", get("STATUS") & 0x04);
         }
 
         public void set(int address, int value)
@@ -79,12 +81,14 @@ namespace PicSim
             // Decode RF page from address
             RegisterPage = (address & 0x180) >> 8;
             RegFile[RegisterPage].ElementAt(address & 0x07F).value = value;
+            if (value == 0)
+                set("STATUS", get("STATUS") & 0x04);
         }
 
         public int get(String regName)
         {
             int i;
-            if (regName == "W")
+            if (regName.ToUpper() == "W")
                 return W;
             else
             {
