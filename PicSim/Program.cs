@@ -96,65 +96,106 @@ namespace PicSim
                             L = new asmLabel("", BaseAddress);
                             I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF);
                             args = I.getargs();
+                            int temp;
                             int addr = 0;
-                                    switch (I.getmnemonic())
-                                    {
-                                        case "BCF":
-                                            RF.set(args[0], RF.get(args[0]) & ~((0x1 << Convert.ToInt32(args[1], 16))));
-                                            break;
-                                        case "BSF":
-                                            RF.set(args[0], RF.get(args[0]) | ((0x1 << Convert.ToInt32(args[1], 16))));
-                                            break;
-                                        case "BTFSC":
-                                            if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 0)
-                                                RF.set("PCL", RF.get("PCL") + 1);
-                                            break;
-                                        case "BTFSS":
-                                            if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 1)
-                                                RF.set("PCL", RF.get("PCL") + 1);
-                                            break;
-                                        case "ADDLW":
-                                            RF.set("W", RF.get("W") + Convert.ToInt32(args[1], 16));
-                                            break; 
-                                        case "ADDWF":
-                                            RF.set(args[1], RF.get(args[0]) + RF.get(args[1]));
-                                            break;
-                                        case "ANDLW":
-                                            RF.set("W", RF.get("W") & Convert.ToInt32(args[1], 16));
-                                            break;
-                                        case "ANDWF":
-                                            RF.set(args[1], RF.get(args[0]) & RF.get(args[1]));
-                                            break;
-                                        case "CLRF":
-                                            RF.set(args[0], 0);
-                                            break;
-                                        case "CLRW":
-                                            RF.set("W", 0);
-                                            break;
-                                    // Managing labels while decompiling.
-                                    case "CALL":
-                                        args = I.getargs();
-                                        addr = bin & 0x07FF;
-                                        L.label = args[0];
-                                        L.address = addr;
-                                        if (addr < I.getAddress())
-                                            sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
-                                        else
-                                            Labels.Enqueue(new asmLabel(args[0], addr));
-                                        break;
-                                    case "GOTO":
-                                        args = I.getargs();
-                                        addr = bin & 0x07FF;
-                                        L.label = args[0];
-                                        L.address = addr;
-                                        if (addr < I.getAddress())
-                                            sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
-                                        else
-                                            Labels.Enqueue(new asmLabel(args[0], addr));
-                                        break;
-                                    default:
-                                        break;
-                                }
+                            switch (I.getmnemonic())
+                            {
+                                case "BCF":
+                                    RF.set(args[0], RF.get(args[0]) & ~((0x1 << Convert.ToInt32(args[1], 16))));
+                                    break;
+                                case "BSF":
+                                    RF.set(args[0], RF.get(args[0]) | ((0x1 << Convert.ToInt32(args[1], 16))));
+                                    break;
+                                case "BTFSC":
+                                    if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 0)
+                                        RF.set("PCL", RF.get("PCL") + 1);
+                                    break;
+                                case "BTFSS":
+                                    if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 1)
+                                        RF.set("PCL", RF.get("PCL") + 1);
+                                    break;
+                                case "ADDLW":
+                                    RF.set("W", RF.get("W") + Convert.ToInt32(args[1], 16));
+                                    break;
+                                case "ADDWF":
+                                    RF.set(args[1], RF.get(args[0]) + RF.get(args[1]));
+                                    break;
+                                case "ANDLW":
+                                    RF.set("W", RF.get("W") & Convert.ToInt32(args[1], 16));
+                                    break;
+                                case "ANDWF":
+                                    RF.set(args[1], RF.get(args[0]) & RF.get(args[1]));
+                                    break;
+                                case "CLRF":
+                                    RF.set(args[0], 0);
+                                    break;
+                                case "CLRW":
+                                    RF.set("W", 0);
+                                    break;
+                                case "COMF":
+                                    RF.set(args[1], ~RF.get(args[0]));
+                                    break;
+                                case "DECF":
+                                    RF.set(args[1], RF.get(args[0]) - 1);
+                                    break;
+                                case "INCF":
+                                    RF.set(args[1], RF.get(args[0]) + 1);
+                                    break;
+                                case "IORWF":
+                                    RF.set(args[1], RF.get(args[0]) | RF.get(args[1]));
+                                    break;
+                                case "MOVF":
+                                    RF.set(args[1], RF.get(args[0]));
+                                    break;
+                                case "MOVWF":
+                                    RF.set(args[1], RF.get(args[0]));
+                                    break;
+                                case "NOP":
+                                    break;
+                                case "RLF":
+                                    temp = ((RF.get(args[0])) << 1) | (RF.get("STATUS") & 0x1);
+                                    if (((temp & 0x100)) == 0x100)
+                                        RF.set("STATUS", RF.get("STATUS") | 0x100);
+                                    else
+                                        RF.set("STATUS", RF.get("STATUS") & 0x100);
+                                    RF.set(args[1], (temp & 0xff));
+                                    break;
+                                case "RRF":
+                                    temp = ((RF.get(args[0]))) | (RF.get("STATUS") & 0x1) << 8;
+                                    if (((temp & 0x1)) == 1)
+                                        RF.set("STATUS", RF.get("STATUS") | 0x1);
+                                    else
+                                        RF.set("STATUS", RF.get("STATUS") & 0x1);
+                                    temp = temp >> 1;
+                                    RF.set(args[1], (temp & 0xff));
+                                    break;
+                                case "SUBWF":
+
+                                    break;
+                                // Managing labels while decompiling.
+                                case "CALL":
+                                    args = I.getargs();
+                                    addr = bin & 0x07FF;
+                                    L.label = args[0];
+                                    L.address = addr;
+                                    if (addr < I.getAddress())
+                                        sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
+                                    else
+                                        Labels.Enqueue(new asmLabel(args[0], addr));
+                                    break;
+                                case "GOTO":
+                                    args = I.getargs();
+                                    addr = bin & 0x07FF;
+                                    L.label = args[0];
+                                    L.address = addr;
+                                    if (addr < I.getAddress())
+                                        sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
+                                    else
+                                        Labels.Enqueue(new asmLabel(args[0], addr));
+                                    break;
+                                default:
+                                    break;
+                            }
                             if ((Labels.Count > 0) && (I.getAddress() == Labels.Peek().address))
                             {
                                 L = Labels.Dequeue();
