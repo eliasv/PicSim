@@ -90,7 +90,7 @@ namespace PicSim
                         bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
                                                         line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
                         DataBytes.Add(bin);
-                        try
+                        //try
                         {
                             // Start the BT by modifying the CPU Registers.
                             L = new asmLabel("", BaseAddress);
@@ -210,12 +210,13 @@ namespace PicSim
                             sourceISR.Add(I);
 
                         }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine("Something horrible happenned:");
-                            Console.WriteLine(e.Message);
-                            Console.WriteLine("Instruction skipped.");
-                        }
+                        //catch (Exception e)
+                        //{
+                        //    Console.WriteLine("Something horrible happenned:");
+                        //    Console.WriteLine(e.Message);
+                        //    Console.WriteLine("Instruction skipped.");
+                        //    throw e;
+                        //}
 
                     }
                 }

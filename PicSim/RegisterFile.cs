@@ -54,7 +54,7 @@ namespace PicSim
         {
             int i;
             int index = -1;
-            if (regName.ToUpper() == "W")
+            if ((regName == "W") || (regName == "w"))
                 W = value;
             else
             {
@@ -72,7 +72,9 @@ namespace PicSim
                 }
             }
             if (value == 0)
-                set("STATUS", get("STATUS") & 0x04);
+            {
+                setZeroFlag();
+            }
         }
 
         public void set(int address, int value)
@@ -82,13 +84,27 @@ namespace PicSim
             RegisterPage = (address & 0x180) >> 8;
             RegFile[RegisterPage].ElementAt(address & 0x07F).value = value;
             if (value == 0)
-                set("STATUS", get("STATUS") & 0x04);
+            {
+                setZeroFlag();
+            }
+        }
+
+        private void setZeroFlag()
+        {
+            for (int i = 0; i < BANKS; i++)
+            {
+                if (RegFile[i].Exists(x => x.name == "STATUS"))
+                {
+                    int index = RegFile[i].FindIndex(x => x.name == "STATUS");
+                    RegFile[i].ElementAt(index).value = RegFile[i].ElementAt(index).value & 0x04;
+                }
+            }
         }
 
         public int get(String regName)
         {
             int i;
-            if (regName.ToUpper() == "W")
+            if ((regName== "W")|| (regName=="w"))
                 return W;
             else
             {
