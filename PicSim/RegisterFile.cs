@@ -116,6 +116,15 @@ namespace PicSim
                     }
                 }
             }
+            
+            for (i = 0; i < BANKS; i++)
+            {
+                if (RegFile[i].Exists(x => x.name == decodeResgiterFile(Convert.ToInt32(regName,16))))
+                {
+                    return RegFile[i].First(x => x.name == decodeResgiterFile(Convert.ToInt32(regName,16))).value;
+                }
+            }
+
             throw new Exception("Unknown Register.");
         }
 

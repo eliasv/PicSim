@@ -90,7 +90,7 @@ namespace PicSim
                         bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
                                                         line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
                         DataBytes.Add(bin);
-                        //try
+                        try
                         {
                             // Start the BT by modifying the CPU Registers.
                             L = new asmLabel("", BaseAddress);
@@ -176,8 +176,24 @@ namespace PicSim
                                     RF.set(args[1], RF.get(args[0]) ^ RF.get("W"));
                                     break;
                                 case "SWAPF":
-                                    RF.set(args[1], RF.get(args[0]) ^ RF.get("W"));
+                                    RF.set(args[1], (RF.get(args[0])<<4 | RF.get(args[0])>>4) & 0xff);
                                     break;
+                                case "CLRWDT":
+                                    // Uninplemented
+                                    break;
+                                case "IORLW":
+                                    RF.set("W", Convert.ToInt32(args[0],16) | RF.get("W"));
+                                    break;
+                                case "MOVLW":
+                                    RF.set("W", Convert.ToInt32(args[0], 16));
+                                    break;
+                                case "SUBLW":
+                                    RF.set("W", Convert.ToInt32(args[0], 16) - RF.get("W"));
+                                    break;
+                                case "XORLW":
+                                    RF.set("W", Convert.ToInt32(args[0], 16) ^ RF.get("W"));
+                                    break;
+
                                 // Managing labels while decompiling.
                                 case "CALL":
                                     args = I.getargs();
@@ -210,13 +226,13 @@ namespace PicSim
                             sourceISR.Add(I);
 
                         }
-                        //catch (Exception e)
-                        //{
-                        //    Console.WriteLine("Something horrible happenned:");
-                        //    Console.WriteLine(e.Message);
-                        //    Console.WriteLine("Instruction skipped.");
-                        //    throw e;
-                        //}
+                        catch (Exception e)
+                        {
+                            Console.WriteLine("Something horrible happenned:");
+                            Console.WriteLine(e.Message);
+                            Console.WriteLine("Instruction skipped.");
+                            //throw e;
+                        }
 
                     }
                 }
