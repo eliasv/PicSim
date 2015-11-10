@@ -15,6 +15,7 @@ namespace PicSim
     class RegisterFile
     {
         public List<register>[] RegFile;
+        public int W;
         public int[] offset;
         private int RegisterPage { set; get; }
         private const int BANKS = 4;
@@ -53,15 +54,20 @@ namespace PicSim
         {
             int i;
             int index = -1;
-            for (i = 0; i < BANKS; i++)
+            if (regName == "W")
+                W = value;
+            else
             {
-                if (RegFile[i].Exists(x=>x.name==regName))
+                for (i = 0; i < BANKS; i++)
                 {
-                    index = RegFile[i].FindIndex(x=>x.name==regName);
-                    RegFile[i].ElementAt(index).value = value;
-                    if(regName=="STATUS")
+                    if (RegFile[i].Exists(x => x.name == regName))
                     {
-                        RegisterPage = (value & 0x60) >> 5;
+                        index = RegFile[i].FindIndex(x => x.name == regName);
+                        RegFile[i].ElementAt(index).value = value;
+                        if (regName == "STATUS")
+                        {
+                            RegisterPage = (value & 0x60) >> 5;
+                        }
                     }
                 }
             }
@@ -78,11 +84,16 @@ namespace PicSim
         public int get(String regName)
         {
             int i;
-            for (i = 0; i < BANKS; i++)
+            if (regName == "W")
+                return W;
+            else
             {
-                if (RegFile[i].Exists(x => x.name == regName))
+                for (i = 0; i < BANKS; i++)
                 {
-                    return RegFile[i].First(x => x.name == regName).value;
+                    if (RegFile[i].Exists(x => x.name == regName))
+                    {
+                        return RegFile[i].First(x => x.name == regName).value;
+                    }
                 }
             }
             throw new Exception("Unknown Register.");

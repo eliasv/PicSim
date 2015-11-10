@@ -8,6 +8,10 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0F81B068-DD3F-4091-A641-BE581DDE85E7}"
 	ProjectSection(SolutionItems) = preProject
 		PicSim\flash.hex = PicSim\flash.hex
+		PicSim\flashled.asm = PicSim\flashled.asm
+		PicSim\flashled.HEX = PicSim\flashled.HEX
+		PicSim\lab11.asm = PicSim\lab11.asm
+		PicSim\lab11.HEX = PicSim\lab11.HEX
 		..\..\..\Dropbox\PhD\CIIC8995\VM\Project\RegFile.csv = ..\..\..\Dropbox\PhD\CIIC8995\VM\Project\RegFile.csv
 	EndProjectSection
 EndProject

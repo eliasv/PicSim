@@ -9,7 +9,7 @@ namespace PicSim
 {
     class Program
     {
-        enum DataTypes {Program=0, EOF=1, ExtendedAddress=4};
+        enum DataTypes { Program = 0, EOF = 1, ExtendedAddress = 4 };
         const int BYTEBLOCK = 2;
         public static RegisterFile RF = new RegisterFile();
         public static int W;
@@ -20,10 +20,10 @@ namespace PicSim
         static void Main(string[] args)
         {
             List<String> HexCode;
-            List <Instruction> ASM;
-            
+            List<Instruction> ASM;
+
             Init();
-            HexCode = readHex("test.hex");
+            HexCode = readHex("flash.hex");
             //NoLines = HexCode.Length;
             ASM = decompile(HexCode);
             foreach (var line in ASM)
@@ -49,7 +49,7 @@ namespace PicSim
                                 "DECFSZ","INCF","INCFSZ","IORWF","MOVF","MOVWF",
                                 "NOP","RLF","RRF","SUBWF","SWAPF","XORWF"
                             };
-            String[] bitOp = {"BCF","BSF","BTFSC","BTFSS"};
+            String[] bitOp = { "BCF", "BSF", "BTFSC", "BTFSS" };
             String[] LitOps = { "ADDLW","ANDLW","CALL","CLRWDT","GOTO",
                                 "IORLW","MOVLW","RETFIE","RETLW","RETURN",
                                 "SLEEP","SUBLW","XORLW"
@@ -57,7 +57,7 @@ namespace PicSim
             ByteOps.AddRange(byteOp);
             BitOps.AddRange(bitOp);
             LitControlOps.AddRange(LitOps);
-            
+
         }
 
 
@@ -73,110 +73,115 @@ namespace PicSim
             DataTypes DataType;
             List<int> DataBytes = new List<int>();
             List<Instruction> sourceISR = new List<Instruction>();
-            foreach(String line in hex)
+            foreach (String line in hex)
             {
                 Bytes = Convert.ToInt32(line.Substring(1, BYTEBLOCK), 16);
-                BaseAddress = Convert.ToInt32(line.Substring(BYTEBLOCK+1, 2 * BYTEBLOCK), 16) >> 1;
-                DataType = (DataTypes)Convert.ToInt32(line.Substring(3 * BYTEBLOCK+1, BYTEBLOCK), 16);
-                for (i = 0; i < (Bytes * BYTEBLOCK) && (DataType != DataTypes.EOF); i += 2 * BYTEBLOCK)
+                BaseAddress = Convert.ToInt32(line.Substring(BYTEBLOCK + 1, 2 * BYTEBLOCK), 16) >> 1;
+                DataType = (DataTypes)Convert.ToInt32(line.Substring(3 * BYTEBLOCK + 1, BYTEBLOCK), 16);
+                if (BaseAddress == 0x2007)
+                    continue;   // This is a configuration word... and its extremely poorly documented...
+                else
                 {
-                    Instruction I;
-                    asmLabel L;
-                    String[] args;
-                    // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
-                    bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
-                                                    line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
-                    DataBytes.Add(bin);
-                    try
+                    for (i = 0; i < (Bytes * BYTEBLOCK) && (DataType == DataTypes.Program); i += 2 * BYTEBLOCK)
                     {
-                        // Start the BT by modifying the CPU Registers.
-                        L = new asmLabel("", BaseAddress);
-                        I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF);
-                        
-                        if (!LitControlOps.Contains(I.getmnemonic()))
+                        Instruction I;
+                        asmLabel L;
+                        String[] args;
+                        // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
+                        bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
+                                                        line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
+                        DataBytes.Add(bin);
+                        try
                         {
-                            if (BitOps.Contains(I.getmnemonic()))
+                            // Start the BT by modifying the CPU Registers.
+                            L = new asmLabel("", BaseAddress);
+                            I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF);
+
+                            if (!LitControlOps.Contains(I.getmnemonic()))
                             {
-                                switch (I.getmnemonic())
+                                if (BitOps.Contains(I.getmnemonic()))
                                 {
-                                    case "BCF":
-                                        args = I.getargs();
-                                        RF.set(args[0], RF.get(args[0]) & ~((0x1 << Convert.ToInt32(args[1], 16))));
-                                        break;
-                                    case "BSF":
-                                        args = I.getargs();
-                                        RF.set(args[0], RF.get(args[0]) | ((0x1 << Convert.ToInt32(args[1], 16))));
-                                        break;
-                                    case "BTFSC":
-                                        args = I.getargs();
-                                        if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 0)
-                                            RF.set("PCL", RF.get("PCL") + 1);
-                                        break;
-                                    case "BTFSS":
-                                        args = I.getargs();
-                                        if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 1)
-                                            RF.set("PCL", RF.get("PCL") + 1);
-                                        break;
-                                    default:
-                                        break;
+                                    switch (I.getmnemonic())
+                                    {
+                                        case "BCF":
+                                            args = I.getargs();
+                                            RF.set(args[0], RF.get(args[0]) & ~((0x1 << Convert.ToInt32(args[1], 16))));
+                                            break;
+                                        case "BSF":
+                                            args = I.getargs();
+                                            RF.set(args[0], RF.get(args[0]) | ((0x1 << Convert.ToInt32(args[1], 16))));
+                                            break;
+                                        case "BTFSC":
+                                            args = I.getargs();
+                                            if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 0)
+                                                RF.set("PCL", RF.get("PCL") + 1);
+                                            break;
+                                        case "BTFSS":
+                                            args = I.getargs();
+                                            if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 1)
+                                                RF.set("PCL", RF.get("PCL") + 1);
+                                            break;
+                                        default:
+                                            break;
+                                    }
+                                }
+                                else
+                                {
+                                    switch (I.getmnemonic())
+                                    {
+                                        case "ADDWF":
+                                            break;
+                                        default:
+                                            break;
+                                    }
                                 }
                             }
                             else
                             {
+                                int addr;
                                 switch (I.getmnemonic())
                                 {
-                                    case "ADDWF":
+                                    // Managing labels while decompiling.
+                                    case "CALL":
+                                        args = I.getargs();
+                                        addr = bin & 0x07FF;
+                                        L.label = args[0];
+                                        L.address = addr;
+                                        if (addr < I.getAddress())
+                                            sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
+                                        else
+                                            Labels.Enqueue(new asmLabel(args[0], addr));
+                                        break;
+                                    case "GOTO":
+                                        args = I.getargs();
+                                        addr = bin & 0x07FF;
+                                        L.label = args[0];
+                                        L.address = addr;
+                                        if (addr < I.getAddress())
+                                            sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
+                                        else
+                                            Labels.Enqueue(new asmLabel(args[0], addr));
                                         break;
                                     default:
                                         break;
                                 }
                             }
-                        }
-                        else
-                        {
-                            int addr;
-                            switch(I.getmnemonic())
+                            if ((Labels.Count > 0) && (I.getAddress() == Labels.Peek().address))
                             {
-                                // Managing labels while decompiling.
-                                case "CALL":
-                                    args = I.getargs();
-                                    addr = bin & 0x07FF;
-                                    L.label = args[0];
-                                    L.address = addr;
-                                    if (addr < I.getAddress())
-                                        sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
-                                    else
-                                        Labels.Enqueue(new asmLabel(args[0], addr));
-                                    break;
-                                case "GOTO":
-                                    args = I.getargs();
-                                    addr = bin & 0x07FF;
-                                    L.label = args[0];
-                                    L.address = addr;
-                                    if (addr < I.getAddress())
-                                        sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
-                                    else
-                                        Labels.Enqueue(new asmLabel(args[0], addr));
-                                    break;
-                                default:
-                                    break;
+                                L = Labels.Dequeue();
+                                I.setLabel(ref L);
                             }
+                            sourceISR.Add(I);
+
                         }
-                        if (I.getAddress() == Labels.Peek().address)
+                        catch (Exception e)
                         {
-                            L = Labels.Dequeue();
-                            I.setLabel(ref L);
+                            Console.WriteLine("Something horrible happenned:");
+                            Console.WriteLine(e.Message);
+                            Console.WriteLine("Instruction skipped.");
                         }
-                        sourceISR.Add(I);
-                        
+
                     }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine("Something horrible happenned:");
-                        Console.WriteLine(e.Message);
-                        Console.WriteLine("Instruction skipped.");
-                    }
-                    
                 }
                 CheckSum = Convert.ToInt32(line.Substring(line.Length - BYTEBLOCK, BYTEBLOCK), 16);
             }
@@ -197,23 +202,23 @@ namespace PicSim
         /// <returns>Lines of the read hexfile.</returns>
         public static List<string> readHex(string fname)
         {
-            int NoLines=0;
+            int NoLines = 0;
             List<String> HexCode = new List<string>();
             try
             {
                 StreamReader sr = new StreamReader(fname);
-               
-                    NoLines = 0;
-                    while (!sr.EndOfStream)
-                    {
-                        String line = sr.ReadLine();
-                        HexCode.Add(line);
-                        Console.WriteLine(line);
-                        NoLines++;
-                    }
-                    sr.Close();
-                    sr.Dispose();
-                
+
+                NoLines = 0;
+                while (!sr.EndOfStream)
+                {
+                    String line = sr.ReadLine();
+                    HexCode.Add(line);
+                    Console.WriteLine(line);
+                    NoLines++;
+                }
+                sr.Close();
+                sr.Dispose();
+
             }
 
             catch (Exception e)
