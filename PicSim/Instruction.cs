@@ -13,6 +13,7 @@ namespace PicSim
         private RegisterFile rf;
         private int binary;
         private int BaseAddress;
+        private Stack<int> stck;
         private String ASM { get; set; }
         public asmLabel Label { get; set; }
         private String mnemonic { get; set; }
@@ -85,6 +86,27 @@ namespace PicSim
             Label = label;
             ASM = asmLookUp(Bin);
         }
+        public Instruction(int Bin, int Address, ref RegisterFile regin, ref asmLabel label, ref Stack<int> ptrTOS)
+        {
+            // TODO: Complete member initialization
+            binary = Bin;
+            rf = regin;
+            BaseAddress = Address;
+            Label = label;
+            ASM = asmLookUp(Bin);
+            stck = ptrTOS;
+        }
+
+        public Instruction(int Bin, int Address, ref RegisterFile regin, ref Stack<int> ptrTOS)
+        {
+            // TODO: Complete member initialization
+            binary = Bin;
+            rf = regin;
+            BaseAddress = Address;
+            ASM = asmLookUp(Bin);
+            stck = ptrTOS;
+        }
+
 
         public int getAddress()
         {
@@ -320,6 +342,127 @@ namespace PicSim
         public override String ToString()
         {
             return String.Format("{0,5}\t{3,6}\t{1,15}\t{2,-32}",BaseAddress.ToString("X4"), Label, ASM, binary.ToString("X4"));
+        }
+
+
+        public void execute()
+        {
+            // Start the BT by modifying the CPU Registers.
+            string[] args = getargs();
+            int temp;
+            switch (getmnemonic())
+            {
+                case "BCF":
+                    rf.set(args[0], rf.get(args[0]) & ~((0x1 << Convert.ToInt32(args[1], 16))));
+                    break;
+                case "BSF":
+                    rf.set(args[0], rf.get(args[0]) | ((0x1 << Convert.ToInt32(args[1], 16))));
+                    break;
+                case "BTFSC":
+                    if (((rf.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 0)
+                        rf.set("PCL", rf.get("PCL") + 1);
+                    break;
+                case "BTFSS":
+                    if (((rf.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 1)
+                        rf.set("PCL", rf.get("PCL") + 1);
+                    break;
+                case "ADDLW":
+                    rf.set("W", rf.get("W") + Convert.ToInt32(args[1], 16));
+                    break;
+                case "ADDWF":
+                    rf.set(args[1], rf.get(args[0]) + rf.get("W"));
+                    break;
+                case "ANDLW":
+                    rf.set("W", rf.get("W") & Convert.ToInt32(args[1], 16));
+                    break;
+                case "ANDWF":
+                    rf.set(args[1], rf.get(args[0]) & rf.get("W"));
+                    break;
+                case "CLRF":
+                    rf.set(args[0], 0);
+                    break;
+                case "CLRW":
+                    rf.set("W", 0);
+                    break;
+                case "COMF":
+                    rf.set(args[1], ~rf.get(args[0]));
+                    break;
+                case "DECF":
+                    rf.set(args[1], rf.get(args[0]) - 1);
+                    break;
+                case "INCF":
+                    rf.set(args[1], rf.get(args[0]) + 1);
+                    break;
+                case "IORWF":
+                    rf.set(args[1], rf.get(args[0]) | rf.get("W"));
+                    break;
+                case "MOVF":
+                    rf.set(args[1], rf.get(args[0]));
+                    break;
+                case "MOVWF":
+                    rf.set(args[0], rf.get("W"));
+                    break;
+                case "NOP":
+                    break;
+                case "RLF":
+                    temp = ((rf.get(args[0])) << 1) | (rf.get("STATUS") & 0x1);
+                    if (((temp & 0x100)) == 0x100)
+                        rf.set("STATUS", rf.get("STATUS") | 0x100);
+                    else
+                        rf.set("STATUS", rf.get("STATUS") & 0x100);
+                    rf.set(args[1], (temp & 0xff));
+                    break;
+                case "RRF":
+                    temp = ((rf.get(args[0]))) | (rf.get("STATUS") & 0x1) << 8;
+                    if (((temp & 0x1)) == 1)
+                        rf.set("STATUS", rf.get("STATUS") | 0x1);
+                    else
+                        rf.set("STATUS", rf.get("STATUS") & 0x1);
+                    temp = temp >> 1;
+                    rf.set(args[1], (temp & 0xff));
+                    break;
+                case "SUBWF":
+                    rf.set(args[1], rf.get(args[0]) - rf.get("W"));
+                    break;
+                case "XORWF":
+                    rf.set(args[1], rf.get(args[0]) ^ rf.get("W"));
+                    break;
+                case "SWAPF":
+                    rf.set(args[1], (rf.get(args[0]) << 4 | rf.get(args[0]) >> 4) & 0xff);
+                    break;
+                case "CLRWDT":
+                    // Uninplemented
+                    break;
+                case "IORLW":
+                    rf.set("W", Convert.ToInt32(args[0], 16) | rf.get("W"));
+                    break;
+                case "MOVLW":
+                    rf.set("W", Convert.ToInt32(args[0], 16));
+                    break;
+                case "SUBLW":
+                    rf.set("W", Convert.ToInt32(args[0], 16) - rf.get("W"));
+                    break;
+                case "XORLW":
+                    rf.set("W", Convert.ToInt32(args[0], 16) ^ rf.get("W"));
+                    break;
+
+                // Managing labels while decompiling.
+                case "CALL":
+                    stck.Push(rf.get("PCL")+1);
+                    temp = Convert.ToInt32(args[0], 16);
+                    rf.set("PCLATH", (temp & 0xfff) >> 8);
+                    rf.set("PCL", (temp & 0xff));
+                    break;
+                case "GOTO":
+                    stck.Push(rf.get("PCL")+1);
+                    temp = Convert.ToInt32(args[0], 16);
+                    rf.set("PCLATH", (temp & 0xfff) >> 8);
+                    rf.set("PCL", (temp & 0xff));
+
+                    break;
+                default:
+                    break;
+            }
         }
     }
 }

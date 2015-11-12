@@ -16,17 +16,22 @@ namespace PicSim
         public static List<String> BitOps;
         public static List<String> LitControlOps;
         public static Queue<asmLabel> Labels = new Queue<asmLabel>();
+        public static HashSet<Queue<int>> BasicBlock = new HashSet<Queue<int>>();
+        public static Stack<int> ptrTOS = new Stack<int>();
         static void Main(string[] args)
         {
             List<String> HexCode;
             List<Instruction> ASM;
-
             Init();
-            HexCode = readHex("flash.hex");
+            if (args.Length<1)
+                HexCode = readHex("flash.hex");
+            else
+                HexCode = readHex(args[0]);
             //NoLines = HexCode.Length;
             ASM = decompile(HexCode);
             foreach (var line in ASM)
                 Console.WriteLine(line.ToString());
+            Console.ReadKey();
         }
 
         /// <summary>
@@ -94,107 +99,12 @@ namespace PicSim
                         {
                             // Start the BT by modifying the CPU Registers.
                             L = new asmLabel("", BaseAddress);
-                            I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF);
+                            I = new Instruction(bin, BaseAddress + i / (2 * BYTEBLOCK), ref RF, ref ptrTOS);
                             args = I.getargs();
-                            int temp;
-                            int addr = 0;
+                            int addr = I.getAddress();
                             switch (I.getmnemonic())
                             {
-                                case "BCF":
-                                    RF.set(args[0], RF.get(args[0]) & ~((0x1 << Convert.ToInt32(args[1], 16))));
-                                    break;
-                                case "BSF":
-                                    RF.set(args[0], RF.get(args[0]) | ((0x1 << Convert.ToInt32(args[1], 16))));
-                                    break;
-                                case "BTFSC":
-                                    if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 0)
-                                        RF.set("PCL", RF.get("PCL") + 1);
-                                    break;
-                                case "BTFSS":
-                                    if (((RF.get(args[0]) & ((0x1 << Convert.ToInt32(args[1], 16)))) >> Convert.ToInt32(args[1], 16)) == 1)
-                                        RF.set("PCL", RF.get("PCL") + 1);
-                                    break;
-                                case "ADDLW":
-                                    RF.set("W", RF.get("W") + Convert.ToInt32(args[1], 16));
-                                    break;
-                                case "ADDWF":
-                                    RF.set(args[1], RF.get(args[0]) + RF.get("W"));
-                                    break;
-                                case "ANDLW":
-                                    RF.set("W", RF.get("W") & Convert.ToInt32(args[1], 16));
-                                    break;
-                                case "ANDWF":
-                                    RF.set(args[1], RF.get(args[0]) & RF.get("W"));
-                                    break;
-                                case "CLRF":
-                                    RF.set(args[0], 0);
-                                    break;
-                                case "CLRW":
-                                    RF.set("W", 0);
-                                    break;
-                                case "COMF":
-                                    RF.set(args[1], ~RF.get(args[0]));
-                                    break;
-                                case "DECF":
-                                    RF.set(args[1], RF.get(args[0]) - 1);
-                                    break;
-                                case "INCF":
-                                    RF.set(args[1], RF.get(args[0]) + 1);
-                                    break;
-                                case "IORWF":
-                                    RF.set(args[1], RF.get(args[0]) | RF.get("W"));
-                                    break;
-                                case "MOVF":
-                                    RF.set(args[1], RF.get(args[0]));
-                                    break;
-                                case "MOVWF":
-                                    RF.set(args[0], RF.get("W"));
-                                    break;
-                                case "NOP":
-                                    break;
-                                case "RLF":
-                                    temp = ((RF.get(args[0])) << 1) | (RF.get("STATUS") & 0x1);
-                                    if (((temp & 0x100)) == 0x100)
-                                        RF.set("STATUS", RF.get("STATUS") | 0x100);
-                                    else
-                                        RF.set("STATUS", RF.get("STATUS") & 0x100);
-                                    RF.set(args[1], (temp & 0xff));
-                                    break;
-                                case "RRF":
-                                    temp = ((RF.get(args[0]))) | (RF.get("STATUS") & 0x1) << 8;
-                                    if (((temp & 0x1)) == 1)
-                                        RF.set("STATUS", RF.get("STATUS") | 0x1);
-                                    else
-                                        RF.set("STATUS", RF.get("STATUS") & 0x1);
-                                    temp = temp >> 1;
-                                    RF.set(args[1], (temp & 0xff));
-                                    break;
-                                case "SUBWF":
-                                    RF.set(args[1], RF.get(args[0]) - RF.get("W"));
-                                    break;
-                                case "XORWF":
-                                    RF.set(args[1], RF.get(args[0]) ^ RF.get("W"));
-                                    break;
-                                case "SWAPF":
-                                    RF.set(args[1], (RF.get(args[0])<<4 | RF.get(args[0])>>4) & 0xff);
-                                    break;
-                                case "CLRWDT":
-                                    // Uninplemented
-                                    break;
-                                case "IORLW":
-                                    RF.set("W", Convert.ToInt32(args[0],16) | RF.get("W"));
-                                    break;
-                                case "MOVLW":
-                                    RF.set("W", Convert.ToInt32(args[0], 16));
-                                    break;
-                                case "SUBLW":
-                                    RF.set("W", Convert.ToInt32(args[0], 16) - RF.get("W"));
-                                    break;
-                                case "XORLW":
-                                    RF.set("W", Convert.ToInt32(args[0], 16) ^ RF.get("W"));
-                                    break;
-
-                                // Managing labels while decompiling.
+                                 // Managing labels while decompiling.
                                 case "CALL":
                                     args = I.getargs();
                                     addr = bin & 0x07FF;
