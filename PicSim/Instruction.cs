@@ -6,19 +6,16 @@ using System.Threading.Tasks;
 
 namespace PicSim
 {
-    class Instruction
+    class Instruction : picWord
     {
-        public enum DataTypes { Program, EOF, ExtendedAddress = 4 };
-        public const int BYTEBLOCK = 2;
-        private RegisterFile rf;
-        private int binary;
-        private int BaseAddress;
+
         private Stack<int> stck;
         private String ASM { get; set; }
-        public asmLabel Label { get; set; }
-        private String mnemonic { get; set; }
+        
+        protected String mnemonic { get; set; }
         private String[] args { get; set; }
 
+        public override Boolean isInstruction() { return true; }
         /// <summary>
         /// Empty Instruction constructor. Generates a NOP instruction at memory
         /// address 0x0000;
@@ -105,12 +102,6 @@ namespace PicSim
             BaseAddress = Address;
             ASM = asmLookUp(Bin);
             stck = ptrTOS;
-        }
-
-
-        public int getAddress()
-        {
-            return BaseAddress;
         }
 
         /// <summary>
@@ -329,11 +320,7 @@ namespace PicSim
 
         public String getmnemonic() { return mnemonic; }
         public String[] getargs() { return args; }
-        public void setLabel(ref asmLabel label) 
-        { 
-            Label = label;
-            Label.placed = true;
-        }
+
 
         /// <summary>
         /// Convert the instruction into a string mneumonic in the ISA.

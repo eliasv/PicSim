@@ -21,16 +21,17 @@ namespace PicSim
         static void Main(string[] args)
         {
             List<String> HexCode;
-            List<Instruction> ASM;
+            List<picWord> RAM;
             Init();
             if (args.Length<1)
                 HexCode = readHex("flash.hex");
             else
                 HexCode = readHex(args[0]);
             //NoLines = HexCode.Length;
-            ASM = decompile(HexCode);
-            foreach (var line in ASM)
-                Console.WriteLine(line.ToString());
+            RAM = decompile(HexCode);
+            RAM.Sort();
+            foreach (var line in RAM)
+                Console.WriteLine(line.ToString()); // Display the memory mapped dissasembly + data
             Console.ReadKey();
         }
 
@@ -71,19 +72,34 @@ namespace PicSim
         /// </summary>
         /// <param name="hex">Hex code read as an list of strings.</param>
         /// <returns>List of strings with the decompiled assembly.</returns>
-        public static List<Instruction> decompile(List<String> hex)
+        public static List<picWord> decompile(List<String> hex)
         {
             int Bytes, BaseAddress, CheckSum, i, bin;
             DataTypes DataType;
             List<int> DataBytes = new List<int>();
-            List<Instruction> sourceISR = new List<Instruction>();
+            List<picWord> sourceISR = new List<picWord>();
             foreach (String line in hex)
             {
                 Bytes = Convert.ToInt32(line.Substring(1, BYTEBLOCK), 16);
                 BaseAddress = Convert.ToInt32(line.Substring(BYTEBLOCK + 1, 2 * BYTEBLOCK), 16) >> 1;
                 DataType = (DataTypes)Convert.ToInt32(line.Substring(3 * BYTEBLOCK + 1, BYTEBLOCK), 16);
                 if (BaseAddress == 0x2007)
+                {
+                    bin = Convert.ToInt32(line.Substring( 5 * BYTEBLOCK + 1, BYTEBLOCK) +
+                                                        line.Substring( 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
+                    sourceISR.Add(new picWord(bin, BaseAddress));
                     continue;   // This is a configuration word... and its extremely poorly documented...
+                }
+                else if (DataType == DataTypes.ExtendedAddress)
+                {
+                    for (i = 0; i < (Bytes * BYTEBLOCK) && (DataType == DataTypes.Program); i += 2 * BYTEBLOCK)
+                    {
+                        // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
+                        bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
+                                                        line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
+                        sourceISR.Add(new picWord(bin, BaseAddress));
+                    }
+                }
                 else
                 {
                     for (i = 0; i < (Bytes * BYTEBLOCK) && (DataType == DataTypes.Program); i += 2 * BYTEBLOCK)
@@ -104,7 +120,7 @@ namespace PicSim
                             int addr = I.getAddress();
                             switch (I.getmnemonic())
                             {
-                                 // Managing labels while decompiling.
+                                // Managing labels while decompiling.
                                 case "CALL":
                                     args = I.getargs();
                                     addr = bin & 0x07FF;
