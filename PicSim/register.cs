@@ -26,5 +26,10 @@ namespace PicSim
             name = n;
             value = v;
         }
+
+        public override string ToString()
+        {
+            return name;
+        }
     }
 }
