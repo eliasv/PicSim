@@ -16,11 +16,27 @@ namespace PicSim
         private Stack<int> ptrTOS = new Stack<int>();
         private List<String> HexCode;
         protected RegisterFile rf = new RegisterFile();
-        protected List<Int16> EEPROM = new List<short>();
+        protected List<short> EEPROM = new List<short>();
+        protected Instruction current;
+        protected Instruction next;
+
 
         public PIC(List<String> Binary)
         {
             HexCode = Binary;
+        }
+
+        public PIC(ref RegisterFile memorymap, List<String> Code)
+        {
+            rf = memorymap;
+            HexCode = Code;
+            decompile();
+        }
+
+        public PIC(ref RegisterFile mm, List<picWord> program)
+        {
+            FLASH = program;
+            rf = mm;
         }
 
         /// <summary>
@@ -31,8 +47,6 @@ namespace PicSim
         /// <param name="fn">Name of file to open.</param>
         public PIC(String fn)
         {
-            {
-                List<String> HexCode = new List<string>();
                 try
                 {
                     StreamReader sr = new StreamReader(fn);
@@ -45,6 +59,7 @@ namespace PicSim
                     }
                     sr.Close();
                     sr.Dispose();
+                    decompile(); 
                 }
 
                 catch (Exception e)
@@ -52,8 +67,7 @@ namespace PicSim
                     Console.WriteLine("The file could not be read:");
                     Console.WriteLine(e.Message);
                 }
-                 
-            }
+                
         }
 
         /// <summary>
