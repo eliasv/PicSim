@@ -20,10 +20,15 @@ namespace PicSim
         protected Instruction current;
         protected Instruction next;
 
+        // Still need  to include a free running clock to handle the execution speed. 
+        // Best possible solution is a timer object which would generate the execution 
+        // events and keep the architecture up to date.
+
 
         public PIC(List<String> Binary)
         {
             HexCode = Binary;
+            FLASH = decompile();
         }
 
         public PIC(ref RegisterFile memorymap, List<String> Code)
