@@ -30,7 +30,7 @@ namespace PicSim
         {
             rf = memorymap;
             HexCode = Code;
-            decompile();
+            FLASH = decompile();
         }
 
         public PIC(ref RegisterFile mm, List<picWord> program)
@@ -59,7 +59,7 @@ namespace PicSim
                     }
                     sr.Close();
                     sr.Dispose();
-                    decompile(); 
+                    FLASH = decompile(); 
                 }
 
                 catch (Exception e)
