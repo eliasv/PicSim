@@ -24,6 +24,10 @@ namespace PicSim
         // Best possible solution is a timer object which would generate the execution 
         // events and keep the architecture up to date.
 
+        protected System.Timers.Timer CLK = new System.Timers.Timer();
+        protected System.Timers.Timer Tmr0 = new System.Timers.Timer();
+        protected System.Timers.Timer Tmr1 = new System.Timers.Timer();
+        protected System.Timers.Timer Tmr2 = new System.Timers.Timer();
 
         public PIC(List<String> Binary)
         {
