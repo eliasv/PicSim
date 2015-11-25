@@ -14,12 +14,12 @@ namespace PicSim
 
         protected List<picWord> FLASH;
         private Stack<int> ptrTOS = new Stack<int>();
-        private List<String> HexCode;
+        private List<String> HexCode = new List<string>();
         protected RegisterFile rf = new RegisterFile();
         protected List<short> EEPROM = new List<short>();
-        protected Instruction current;
-        protected Instruction next;
-        protected UInt16 PC;
+        protected Instruction current = new Instruction();
+        protected Instruction next = new Instruction();
+        protected int PC;
         public EventHandler Interrupt;
 
         // Still need  to include a free running clock to handle the execution speed. 
@@ -56,14 +56,39 @@ namespace PicSim
         private void setup()
         {
             PC = 0;
+            rf.set("PCL", PC);
+            current = fetch();
             CLK.AutoReset = true;
-            CLK.Enabled = true;
             CLK.Elapsed += CLK_Elapsed;
+            CLK.Interval = 2e3;// 1e3*(1 / .1);   // Lets try a 1ms clock before moving to a faster clock rate. This is also dependent on the 
+                                // Configuration word located at 0x2007.
+            CLK.Enabled = true;
         }
 
         private void CLK_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            //rf.get("")
+            CLK.Stop();
+            PC = rf.get("PCL");
+            current.execute();
+            Console.WriteLine("Executing: " + current.ToString());
+            current = fetch();
+            CLK.Start();
+        }
+
+        protected Instruction fetch()
+        {
+            PC = rf.get("PCL");
+            rf.set("PCL", PC+1);
+            if (((Instruction)(FLASH.Find(x => x.getAddress() == PC))).isInstruction())
+                return (Instruction)FLASH.Find(x => x.getAddress() == PC);
+            else
+            {
+                // This is in case the program tried to access a data memeber as an instructions.
+                // The truth is it doesn't fall into the scope of the implementation, but the workaround
+                // should not be so bad.
+                return new Instruction((FLASH.Find(x => x.getAddress() == PC)).getBin(), (FLASH.Find(x => x.getAddress() == PC)).getAddress());
+            }
+            
         }
 
 
@@ -87,7 +112,8 @@ namespace PicSim
                     }
                     sr.Close();
                     sr.Dispose();
-                    FLASH = decompile(); 
+                    FLASH = decompile();
+                setup();
                 }
 
                 catch (Exception e)

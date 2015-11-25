@@ -32,6 +32,8 @@ namespace PicSim
             RAM.Sort();
             foreach (var line in RAM)
                 Console.WriteLine(line.ToString()); // Display the memory mapped dissasembly + data
+
+            PIC test = new PIC("flash.hex");
             Console.ReadKey();
         }
 

@@ -24,6 +24,11 @@ namespace PicSim
             Label.placed = true;
         }
 
+        public int getBin()
+        {
+            return binary;
+        }
+
         public picWord(int bin, int addr)
         {
             binary = bin;

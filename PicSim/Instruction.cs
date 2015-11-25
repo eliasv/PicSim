@@ -104,6 +104,7 @@ namespace PicSim
             stck = ptrTOS;
         }
 
+
         /// <summary>
         /// This function decodes a PIC16F877 14-bit instruction into its assembly reference.
         /// </summary>
@@ -337,6 +338,7 @@ namespace PicSim
             // Start the BT by modifying the CPU Registers.
             string[] args = getargs();
             int temp;
+            //rf.set("PCL", rf.get("PCL") + 1);
             switch (getmnemonic())
             {
                 case "BCF":
@@ -432,22 +434,21 @@ namespace PicSim
                 case "XORLW":
                     rf.set("W", Convert.ToInt32(args[0], 16) ^ rf.get("W"));
                     break;
-
-                // Managing labels while decompiling.
                 case "CALL":
                     stck.Push(rf.get("PCL")+1);
-                    temp = Convert.ToInt32(args[0], 16);
+                    temp = Convert.ToInt32(args[0].Substring(1), 16);
                     rf.set("PCLATH", (temp & 0xfff) >> 8);
                     rf.set("PCL", (temp & 0xff));
                     break;
                 case "GOTO":
-                    stck.Push(rf.get("PCL")+1);
-                    temp = Convert.ToInt32(args[0], 16);
+                    //stck.Push(rf.get("PCL")+1);
+                    temp = Convert.ToInt32(args[0].Substring(1), 16);
                     rf.set("PCLATH", (temp & 0xfff) >> 8);
                     rf.set("PCL", (temp & 0xff));
 
                     break;
                 default:
+                    Console.WriteLine("Instruction not implemented...");
                     break;
             }
         }
