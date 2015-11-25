@@ -437,16 +437,21 @@ namespace PicSim
                 case "CALL":
                     stck.Push(rf.get("PCL")+1);
                     temp = Convert.ToInt32(args[0].Substring(1), 16);
-                    rf.set("PCLATH", (temp & 0xfff) >> 8);
+                    rf.set("PCLATH", (temp & 0x1f00) >> 8);
                     rf.set("PCL", (temp & 0xff));
                     break;
                 case "GOTO":
                     //stck.Push(rf.get("PCL")+1);
                     temp = Convert.ToInt32(args[0].Substring(1), 16);
-                    rf.set("PCLATH", (temp & 0xfff) >> 8);
+                    rf.set("PCLATH", (temp & 0x1f00) >> 8);
                     rf.set("PCL", (temp & 0xff));
-
                     break;
+                case "RETURN":
+                    temp = stck.Pop();
+                    rf.set("PCL", temp & 0xff);
+                    rf.set("PCLATH", (temp & 0x1f00) >> 8);
+                    break;
+                    
                 default:
                     Console.WriteLine("Instruction not implemented...");
                     break;
