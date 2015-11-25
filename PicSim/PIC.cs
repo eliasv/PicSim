@@ -19,6 +19,8 @@ namespace PicSim
         protected List<short> EEPROM = new List<short>();
         protected Instruction current;
         protected Instruction next;
+        protected UInt16 PC;
+        public EventHandler Interrupt;
 
         // Still need  to include a free running clock to handle the execution speed. 
         // Best possible solution is a timer object which would generate the execution 
@@ -33,20 +35,37 @@ namespace PicSim
         {
             HexCode = Binary;
             FLASH = decompile();
+            setup();
         }
 
         public PIC(ref RegisterFile memorymap, List<String> Code)
         {
             rf = memorymap;
             HexCode = Code;
-            FLASH = decompile(); 
+            FLASH = decompile();
+            setup();
         }
 
         public PIC(ref RegisterFile mm, List<picWord> program)
         {
             FLASH = program;
             rf = mm;
+            setup();
         }
+
+        private void setup()
+        {
+            PC = 0;
+            CLK.AutoReset = true;
+            CLK.Enabled = true;
+            CLK.Elapsed += CLK_Elapsed;
+        }
+
+        private void CLK_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            //rf.get("")
+        }
+
 
         /// <summary>
         /// Function reads a PIC-formated hex file and returns the lines 
@@ -96,13 +115,15 @@ namespace PicSim
                 DataType = (DataTypes)Convert.ToInt32(line.Substring(3 * BYTEBLOCK + 1, BYTEBLOCK), 16);
                 if (BaseAddress == 0x2007)
                 {
+                    // This is a configuration word... and its extremely poorly documented...
                     bin = Convert.ToInt32(line.Substring(5 * BYTEBLOCK + 1, BYTEBLOCK) +
                                                         line.Substring(4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
                     sourceISR.Add(new picWord(bin, BaseAddress));
-                    continue;   // This is a configuration word... and its extremely poorly documented...
+                    continue;   
                 }
                 else if (DataType == DataTypes.ExtendedAddress)
                 {
+                    // This is data which was placed in the the PIC's flash memory. To avoid using the limited RAM.
                     for (i = 0; i < (Bytes * BYTEBLOCK) && (DataType == DataTypes.Program); i += 2 * BYTEBLOCK)
                     {
                         // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
@@ -113,6 +134,7 @@ namespace PicSim
                 }
                 else
                 {
+                    // This is an insrucion block.
                     for (i = 0; i < (Bytes * BYTEBLOCK) && (DataType == DataTypes.Program); i += 2 * BYTEBLOCK)
                     {
                         Queue<asmLabel> Labels = new Queue<asmLabel>();
