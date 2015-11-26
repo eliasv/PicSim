@@ -451,7 +451,24 @@ namespace PicSim
                     rf.set("PCL", temp & 0xff);
                     rf.set("PCLATH", (temp & 0x1f00) >> 8);
                     break;
-                    
+                case "RETLW":
+                    temp = stck.Pop();
+                    rf.set("W", Convert.ToInt32(args[0]));
+                    rf.set("PCL", temp & 0xff);
+                    rf.set("PCLATH", (temp & 0x1f00) >> 8);
+                    break;
+                case "DECFSZ":
+                    temp = rf.get(args[0])-1;
+                    rf.set(args[0], temp);
+                    if (temp == 0)
+                        rf.set("PCL", rf.get("PCL") + 1);
+                    break;
+                case "INCFSZ":
+                    temp = rf.get(args[0]) + 1;
+                    rf.set(args[0], temp);
+                    if (temp == 0)
+                        rf.set("PCL", rf.get("PCL") + 1);
+                    break;
                 default:
                     Console.WriteLine("Instruction not implemented...");
                     break;
