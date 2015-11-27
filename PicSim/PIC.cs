@@ -30,6 +30,7 @@ namespace PicSim
         protected System.Timers.Timer Tmr0 = new System.Timers.Timer();
         protected System.Timers.Timer Tmr1 = new System.Timers.Timer();
         protected System.Timers.Timer Tmr2 = new System.Timers.Timer();
+        protected System.Timers.Timer WDT = new System.Timers.Timer();
 
         public PIC(List<String> Binary)
         {
