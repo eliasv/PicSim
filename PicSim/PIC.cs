@@ -54,6 +54,7 @@ namespace PicSim
             setup();
         }
 
+
         private void setup()
         {
             PC = 0;
@@ -65,7 +66,15 @@ namespace PicSim
                                 // Configuration word located at 0x2007.
             CLK.Enabled = true;
         }
-
+        /// <summary>
+        /// This is an event manager which takes care of the system clock. It's configured by a 
+        /// combination of the configuration word and any hardware attached to the microcontroller.
+        /// The clock avoids retriggering by stopping the timer while executing the event, this 
+        /// should only be an issue while debugging at very slow timer intervals. Debugging is done 
+        /// between 2s - 25s retriggering interval.
+        /// </summary>
+        /// <param name="sender">Object which generates the event.</param>
+        /// <param name="e">Timer event generated.</param>
         private void CLK_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
             CLK.Stop();
@@ -76,6 +85,13 @@ namespace PicSim
             CLK.Start();
         }
 
+        /// <summary>
+        /// Pipeline abstraction for the microcontroller. This method is in charge of fetching the 
+        /// instruction pointed by the program counter. In the even that the programmer added data
+        /// into the program memory and tries to execute it, the fetch method attemps to decode the 
+        /// instruction and feed it to the microcontroller.
+        /// </summary>
+        /// <returns>An instruction class object is return with the next instruction pointed to by the PC.</returns>
         protected Instruction fetch()
         {
             PC = rf.get("PCL");
@@ -87,7 +103,9 @@ namespace PicSim
                 // This is in case the program tried to access a data memeber as an instructions.
                 // The truth is it doesn't fall into the scope of the implementation, but the workaround
                 // should not be so bad.
-                return new Instruction((FLASH.Find(x => x.getAddress() == PC)).getBin(), (FLASH.Find(x => x.getAddress() == PC)).getAddress());
+                return new Instruction( (FLASH.Find(x => x.getAddress() == PC)).getBin(), 
+                                        (FLASH.Find(x => x.getAddress() == PC)).getAddress(),
+                                        ref rf, ref ptrTOS);
             }
             
         }
