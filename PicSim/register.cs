@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PicSim
+namespace PicLib
 {
-    class register
+    public class register
     {
         public string name;
         public int value { set; get; }

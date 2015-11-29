@@ -5,14 +5,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PicSim
+namespace PicLib
 {
     /// <summary>
     /// Abstraction of the Register File for the PIC18F877.
     /// Implemented as a CSV spreadsheet where the memory banks are represented as
     /// columns and the relative addreses are the rows.
     /// </summary>
-    class RegisterFile
+    public class RegisterFile
     {
         public List<register>[] RegFile;
         public int W;

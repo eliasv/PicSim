@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PicSim
+namespace PicLib
 {
-    class asmLabel:IComparable<asmLabel>
+    public class asmLabel:IComparable<asmLabel>
     {
         public String label { get; set; }
         public int address { get; set; }

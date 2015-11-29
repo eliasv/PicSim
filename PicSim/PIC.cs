@@ -1,13 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-namespace PicSim
+namespace PicLib
 {
-    class PIC
+    public class PIC
     {
         enum DataTypes { Program = 0, EOF = 1, ExtendedAddress = 4 };
         const int BYTEBLOCK = 2;

@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PicSim
+namespace PicLib
 {
-    class Instruction : picWord
+    public class Instruction : picWord
     {
 
         private Stack<int> stck;

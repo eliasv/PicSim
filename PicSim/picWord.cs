@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PicSim
+namespace PicLib
 {
-    class picWord : IComparable<picWord>
+    public class picWord : IComparable<picWord>
     {
         public enum DataTypes { Program, EOF, ExtendedAddress = 4 };
         public const int BYTEBLOCK = 2;
