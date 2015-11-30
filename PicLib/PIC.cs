@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Diagnostics;
 
 namespace PicLib
 {
@@ -11,7 +12,7 @@ namespace PicLib
     {
         enum DataTypes { Program = 0, EOF = 1, ExtendedAddress = 4 };
         const int BYTEBLOCK = 2;
-
+        String[] logentries;// { init = "PIC initialization." };
         protected List<picWord> FLASH;
         private Stack<int> ptrTOS = new Stack<int>();
         private List<String> HexCode = new List<string>();
@@ -65,6 +66,7 @@ namespace PicLib
             CLK.Interval = 2e3;// 1e3*(1 / .1);   // Lets try a 1ms clock before moving to a faster clock rate. This is also dependent on the 
                                 // Configuration word located at 0x2007.
             CLK.Enabled = true;
+            EventLog.WriteEntry(logentries[0], "Init complete. Main clock started at a frequency of " + (1/((double)CLK.Interval)).ToString() + "Hz.");
         }
         /// <summary>
         /// This is an event manager which takes care of the system clock. It's configured by a 
@@ -80,7 +82,8 @@ namespace PicLib
             CLK.Stop();
             PC = rf.get("PCL");
             current.execute();
-            Console.WriteLine("Executing: " + current.ToString());
+            //Console.WriteLine("Executing: " + current.ToString());
+            
             current = fetch();
             CLK.Start();
         }
@@ -132,7 +135,7 @@ namespace PicLib
                     sr.Close();
                     sr.Dispose();
                     FLASH = decompile();
-                setup();
+                    setup();
                 }
 
                 catch (Exception e)

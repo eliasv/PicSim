@@ -335,10 +335,8 @@ namespace PicLib
 
         public void execute()
         {
-            // Start the BT by modifying the CPU Registers.
             string[] args = getargs();
             int temp;
-            //rf.set("PCL", rf.get("PCL") + 1);
             switch (getmnemonic())
             {
                 case "BCF":
@@ -470,8 +468,9 @@ namespace PicLib
                         rf.set("PCL", rf.get("PCL") + 1);
                     break;
                 default:
-                    Console.WriteLine("Instruction not implemented...");
-                    break;
+                    //Console.WriteLine("Instruction not implemented...");
+                    throw new Exception("Instruction.Execute: Instruction not implemented.");
+                    
             }
         }
     }
