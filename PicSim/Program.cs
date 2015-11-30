@@ -34,7 +34,7 @@ namespace PicSim
             foreach (var line in RAM)
                 Console.WriteLine(line.ToString()); // Display the memory mapped dissasembly + data
             Console.ReadKey();
-            PIC test = new PIC("flash.hex");
+            PIC test = new PIC("lab11.hex");
             Console.ReadKey();
         }
 
