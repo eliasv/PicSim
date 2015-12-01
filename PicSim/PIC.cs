@@ -32,6 +32,10 @@ namespace PicLib
         protected System.Timers.Timer Tmr2 = new System.Timers.Timer();
         protected System.Timers.Timer WDT = new System.Timers.Timer();
 
+        public RegisterFile getRegisterFile()
+        {
+            return rf;
+        }
         public PIC(List<String> Binary)
         {
             HexCode = Binary;
@@ -62,7 +66,7 @@ namespace PicLib
             current = fetch();
             CLK.AutoReset = true;
             CLK.Elapsed += CLK_Elapsed;
-            CLK.Interval = 2e3;// 1e3*(1 / .1);   // Lets try a 1ms clock before moving to a faster clock rate. This is also dependent on the 
+            CLK.Interval = 500;// 1e3*(1 / .1);   // Lets try a 1ms clock before moving to a faster clock rate. This is also dependent on the 
                                 // Configuration word located at 0x2007.
             CLK.Enabled = true;
         }
@@ -152,7 +156,7 @@ namespace PicLib
             int Bytes, BaseAddress, CheckSum, i, bin;
             DataTypes DataType;
             List<int> DataBytes = new List<int>();
-            List<picWord> sourceISR = new List<picWord>();
+            List<picWord> sourceISA = new List<picWord>();
             foreach (String line in HexCode)
             {
                 Bytes = Convert.ToInt32(line.Substring(1, BYTEBLOCK), 16);
@@ -163,7 +167,7 @@ namespace PicLib
                     // This is a configuration word... and its extremely poorly documented...
                     bin = Convert.ToInt32(line.Substring(5 * BYTEBLOCK + 1, BYTEBLOCK) +
                                                         line.Substring(4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
-                    sourceISR.Add(new picWord(bin, BaseAddress));
+                    sourceISA.Add(new picWord(bin, BaseAddress));
                     continue;   
                 }
                 else if (DataType == DataTypes.ExtendedAddress)
@@ -174,7 +178,7 @@ namespace PicLib
                         // Due to the little endian design of the instruction format, bytes need to be reverse in order to be usable.
                         bin = Convert.ToInt32(line.Substring(i + 5 * BYTEBLOCK + 1, BYTEBLOCK) +
                                                         line.Substring(i + 4 * BYTEBLOCK + 1, BYTEBLOCK), 16);
-                        sourceISR.Add(new picWord(bin, BaseAddress));
+                        sourceISA.Add(new picWord(bin, BaseAddress));
                     }
                 }
                 else
@@ -206,7 +210,7 @@ namespace PicLib
                                     L.label = args[0];
                                     L.address = addr;
                                     if (addr < I.getAddress())
-                                        sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
+                                        sourceISA.Find(x => x.getAddress() == addr).setLabel(ref L);
                                     else
                                         Labels.Enqueue(new asmLabel(args[0], addr));
                                     break;
@@ -216,7 +220,7 @@ namespace PicLib
                                     L.label = args[0];
                                     L.address = addr;
                                     if (addr < I.getAddress())
-                                        sourceISR.Find(x => x.getAddress() == addr).setLabel(ref L);
+                                        sourceISA.Find(x => x.getAddress() == addr).setLabel(ref L);
                                     else
                                         Labels.Enqueue(new asmLabel(args[0], addr));
                                     break;
@@ -228,7 +232,7 @@ namespace PicLib
                                 L = Labels.Dequeue();
                                 I.setLabel(ref L);
                             }
-                            sourceISR.Add(I);
+                            sourceISA.Add(I);
 
                         }
                         catch (Exception e)
@@ -243,7 +247,7 @@ namespace PicLib
                 }
                 CheckSum = Convert.ToInt32(line.Substring(line.Length - BYTEBLOCK, BYTEBLOCK), 16);
             }
-            return sourceISR;
+            return sourceISA;
         }
     }
 }
