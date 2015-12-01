@@ -13,10 +13,12 @@
             <Menu DockPanel.Dock="Top">
                 <MenuItem Header="File">
                     <MenuItem Header="_Open..." Click="MenuItem_Open_Click" />
+                    <MenuItem Header="_Run" Click="MenuItem_Run_Click" Name="mnuRun" IsEnabled="False" />
                     <MenuItem Header="E_xit" Click="MenuItem_Exit_Click" />
                 </MenuItem>
             </Menu>
-            <ListBox DockPanel.Dock="Right" Width="200" Name="lstHex"></ListBox>
+            <ListBox DockPanel.Dock="Right" Name="lstHex" />
+            <ListBox DockPanel.Dock="Left" Name="lstISA" />
         </DockPanel>
         
     </Grid>

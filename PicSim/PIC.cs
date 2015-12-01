@@ -19,7 +19,7 @@ namespace PicLib
         protected List<short> EEPROM = new List<short>();
         protected Instruction current = new Instruction();
         protected Instruction next = new Instruction();
-        protected int PC;
+        public int PC;
         public EventHandler Interrupt;
 
         // Still need  to include a free running clock to handle the execution speed. 
@@ -31,6 +31,16 @@ namespace PicLib
         protected System.Timers.Timer Tmr1 = new System.Timers.Timer();
         protected System.Timers.Timer Tmr2 = new System.Timers.Timer();
         protected System.Timers.Timer WDT = new System.Timers.Timer();
+
+        public double getclkInterval()
+        {
+            return CLK.Interval;
+        }
+
+        public Instruction getCurrent()
+        {
+            return current;
+        }
 
         public RegisterFile getRegisterFile()
         {
@@ -64,12 +74,23 @@ namespace PicLib
             PC = 0;
             rf.set("PCL", PC);
             current = fetch();
+            CLK.Enabled = false;
             CLK.AutoReset = true;
             CLK.Elapsed += CLK_Elapsed;
             CLK.Interval = 500;// 1e3*(1 / .1);   // Lets try a 1ms clock before moving to a faster clock rate. This is also dependent on the 
                                 // Configuration word located at 0x2007.
+        }
+
+        public void start()
+        {
             CLK.Enabled = true;
         }
+
+        public void stop()
+        {
+            CLK.Enabled = false;
+        }
+
         /// <summary>
         /// This is an event manager which takes care of the system clock. It's configured by a 
         /// combination of the configuration word and any hardware attached to the microcontroller.

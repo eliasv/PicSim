@@ -24,6 +24,7 @@ namespace GUI
     public partial class MainWindow : Window
     {
         protected PIC pic;
+        protected System.Timers.Timer CLK = new System.Timers.Timer();
         public MainWindow()
         {
             InitializeComponent();
@@ -38,17 +39,56 @@ namespace GUI
 
             if(selected==true)
             {
+                lstISA.Items.Clear();
+                lstHex.Items.Clear();
                 string fname = ofd.FileName;
                 StreamReader sr = new StreamReader(ofd.OpenFile());
                 while(!sr.EndOfStream)
                     lstHex.Items.Add(sr.ReadLine());
                 pic = new PIC(fname);
+                foreach(var x in pic.decompile())
+                {
+                    lstISA.Items.Add(x);
+                }
+                mnuRun.IsEnabled = true;
+                CLK.Interval = pic.getclkInterval()/2;
+                CLK.Elapsed += CLK_Elapsed;
+                CLK.AutoReset = true;
+                
             }
+        }
+
+        private void CLK_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
+        {
+            int current = pic.PC;
+            //lstISA.SelectedItem = lstISA.FindName(pic.getCurrent().ToString());
+            var result = from o in lstISA.Items.OfType<picWord>()
+                         where o.getAddress() == current
+                         select o;
+            //lstISA.SelectedItem=lstISA.Items.GetItemAt(current);
+            
         }
 
         private void MenuItem_Exit_Click(object sender, RoutedEventArgs e)
         {
             this.Close();
+        }
+
+        private void MenuItem_Run_Click(object sender, RoutedEventArgs e)
+        {
+            if ((String)mnuRun.Header == "_Run")
+            {
+                pic.start();
+                CLK.Start();
+                mnuRun.Header = "_Stop";
+            }
+            else
+            {
+                CLK.Stop();
+                pic.stop();
+                mnuRun.Header = "_Run";
+            }
+
         }
     }
 }
