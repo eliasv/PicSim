@@ -25,9 +25,13 @@ namespace GUI
     {
         protected PIC pic;
         protected System.Timers.Timer CLK = new System.Timers.Timer();
+        protected List<picWord> ISA = new List<picWord>();
         public MainWindow()
         {
             InitializeComponent();
+            this.DataContext = this;
+            lstISA.ItemsSource = ISA;
+            
         }
 
         private void MenuItem_Open_Click(object sender, RoutedEventArgs e)
@@ -39,22 +43,24 @@ namespace GUI
 
             if(selected==true)
             {
-                lstISA.Items.Clear();
+                //lstISA.Items.Clear();
                 lstHex.Items.Clear();
                 string fname = ofd.FileName;
                 StreamReader sr = new StreamReader(ofd.OpenFile());
                 while(!sr.EndOfStream)
                     lstHex.Items.Add(sr.ReadLine());
                 pic = new PIC(fname);
-                foreach(var x in pic.decompile())
-                {
-                    lstISA.Items.Add(x);
-                }
+                ISA = pic.decompile();
+                lstISA.ItemsSource = ISA;
+                //foreach (var x in ISA)
+                //{
+                //    lstISA.Items.Add(x);
+                //}
                 mnuRun.IsEnabled = true;
                 CLK.Interval = pic.getclkInterval()/2;
                 CLK.Elapsed += CLK_Elapsed;
                 CLK.AutoReset = true;
-                
+                lblStatus.DataContext = pic.getCurrent();
             }
         }
 
@@ -65,8 +71,7 @@ namespace GUI
             var result = from o in lstISA.Items.OfType<picWord>()
                          where o.getAddress() == current
                          select o;
-            //lstISA.SelectedItem=lstISA.Items.GetItemAt(current);
-            
+            //lstISA.SelectedItem = result.First();
         }
 
         private void MenuItem_Exit_Click(object sender, RoutedEventArgs e)
@@ -79,12 +84,12 @@ namespace GUI
             if ((String)mnuRun.Header == "_Run")
             {
                 pic.start();
-                CLK.Start();
+                //CLK.Start();
                 mnuRun.Header = "_Stop";
             }
             else
             {
-                CLK.Stop();
+                //CLK.Stop();
                 pic.stop();
                 mnuRun.Header = "_Run";
             }

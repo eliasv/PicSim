@@ -1,25 +1,45 @@
-﻿<Window x:Class="GUI.MainWindow"
+﻿<Window
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GUI"
+        xmlns:PicLib="clr-namespace:PicLib;assembly=PicSim" x:Class="GUI.MainWindow"
         mc:Ignorable="d"
-        Title="MainWindow" Height="480" Width="640">
-    
-    
+        Title="MainWindow" Height="480" Width="720">
+
+
     <Grid>
-        <DockPanel>
-            <Menu DockPanel.Dock="Top">
-                <MenuItem Header="File">
-                    <MenuItem Header="_Open..." Click="MenuItem_Open_Click" />
-                    <MenuItem Header="_Run" Click="MenuItem_Run_Click" Name="mnuRun" IsEnabled="False" />
-                    <MenuItem Header="E_xit" Click="MenuItem_Exit_Click" />
-                </MenuItem>
-            </Menu>
-            <ListBox DockPanel.Dock="Right" Name="lstHex" />
-            <ListBox DockPanel.Dock="Left" Name="lstISA" />
+        <Grid.RowDefinitions >
+            <RowDefinition Height="*" />
+            <RowDefinition Height="20*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+            <ColumnDefinition Width="1*"/>
+        </Grid.ColumnDefinitions>
+        <Menu Grid.Row="0" Grid.ColumnSpan="3">
+            <MenuItem Header="File">
+                <MenuItem Header="_Open..." Click="MenuItem_Open_Click" />
+                <MenuItem Header="_Run" Click="MenuItem_Run_Click" x:Name="mnuRun" IsEnabled="False" />
+                <MenuItem Header="E_xit" Click="MenuItem_Exit_Click" />
+            </MenuItem>
+        </Menu>
+        <DockPanel Grid.Row="1" Grid.ColumnSpan="3" >
+            <ListBox x:Name="lstHex" DockPanel.Dock="Right" Width="auto" />
+            <ListBox x:Name="lstISA" DockPanel.Dock="Left" Width="auto" />
         </DockPanel>
-        
+
+        <StatusBar Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="2" MinHeight="10">
+            <StatusBarItem >
+                <TextBlock x:Name="lblStatus" IsEnabled="True" Text="" >
+                    <TextBlock.DataContext>
+                        <PicLib:picWord/>
+                    </TextBlock.DataContext>
+                </TextBlock>
+            </StatusBarItem>
+        </StatusBar>
     </Grid>
 </Window>

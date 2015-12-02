@@ -39,7 +39,10 @@ namespace PicLib
 
         public Instruction getCurrent()
         {
-            return current;
+            if (current != null)
+                return current;
+            else
+                return new Instruction();
         }
 
         public RegisterFile getRegisterFile()
